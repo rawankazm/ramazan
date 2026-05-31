@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ku" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS System - Mil 16</title>
+    <style>
+        html, body { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background-color: white; 
+            font-family: 'Calibri', 'Segoe UI', Tahoma, sans-serif; 
+            user-select: none; 
+        }
+        .controls-container { display: flex; gap: 10px; justify-content: center; margin-top: 20px; padding-bottom: 40px; }
+        .action-btn { padding: 10px 25px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        #excel-menu { position: fixed; display: none; background: #fff; border: 1px solid #ababab; box-shadow: 3px 3px 10px rgba(0,0,0,0.2); z-index: 10000; padding: 10px; width: 180px; border-radius: 4px; }
+        input { 
+            width: 100%; height: 100%; border: none; outline: none; 
+            text-align: center; font-weight: bold; background: transparent; 
+            box-sizing: border-box; font-size: 15px;
+            font-family: 'Calibri', sans-serif;
+        }
+        #company_name, #owner_name, #color_val, #glass_type, .data-table input[type="text"] {
+            direction: rtl; 
+            text-align: center;
+        }
+        .w-in, .h-in, .q-in, .m2-res, .footer-total, .bg-grey-input input {
+            direction: ltr;
+        }
+        .page-frame { padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; }
+        .top-header-wrapper { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 8px; height: 180px; position: relative; }
+        .header-left-side { position: absolute; left: 20px; top: 0; display: flex; flex-direction: column; justify-content: space-between; height: 160px; width: 380px; }
+        .header-logo-main { width: 210px; height: auto; }
+        .contact-info { font-size: 14px; color: #000; font-weight: 900; line-height: 1.6; }
+        .info-table { border-collapse: collapse; width: 320px; border: 1.5px solid #000; z-index: 2; }
+        .info-table td { border: 1.2px solid #000; padding: 0px; height: 19px; }
+        .label-cell { background-color: #eee !important; width: 85px; text-align: right; padding-right: 5px; font-weight: bold; font-size: 11.5px; }
+        .right-side-table { position: absolute; right: 20px; top: 0; border-collapse: collapse; width: 310px; border: 1.5px solid #000; }
+        .right-side-table td { border: 1.2px solid #000; height: 18px; text-align: right; padding-right: 5px; font-weight: bold; font-size: 11px; }
+        .not-cell { background-color: #eee !important; text-align: center !important; font-size: 16px !important; letter-spacing: 2px; height: 22px !important; }
+        .system-input { color: red !important; font-size: 15px !important; direction: rtl !important; }
+        .spacer-part { flex: 1; background-color: red !important; color: black; text-align: center; font-weight: bold; font-size: 11px; border-right: 1px solid black; line-height: 19px; }
+        .band-part { flex: 1; background-color: white; color: black; text-align: center; font-weight: bold; font-size: 11px; line-height: 19px; }
+        table.data-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000; table-layout: fixed; }
+        th { border: 1px solid #000; background-color: #bbb !important; padding: 2px; font-size: 10.5px; text-align: center; font-weight: 900; }
+        td { border: 1px solid #000; height: 22px; text-align: center; padding: 0; position: relative; } 
+        .bg-grey-input { background-color: rgba(200, 200, 200, 0.3) !important; }
+        .row-num { background-color: #ccc !important; font-weight: bold; font-size: 12px; }
+        .footer-total { border: 1.5px solid #000; font-size: 24px !important; font-weight: 900; height: 35px; }
+        @media print { .controls-container, #excel-menu { display: none !important; } @page { size: A4 landscape; margin: 5mm; } * { -webkit-print-color-adjust: exact !important; } }
+    </style>
+</head>
+<body onclick="hideMenu()">
+
+<div class="page-frame" id="printable-area">
+    <div class="top-header-wrapper">
+        <div class="header-left-side">
+            <img src="1.png" class="header-logo-main" alt="Logo">
+            <div class="contact-info">
+                <div>📍 100 Meter Street Sanai Cunubi South Erbil</div>
+                <div>📞 +964 751 499 58 99</div>
+                <div>📞 +964 772 499 58 99</div>
+            </div>
+        </div>
+        <table class="info-table">
+            <tr><td><input type="text" id="company_name"></td><td class="label-cell">اسم شركة</td></tr>
+            <tr><td><input type="text" id="owner_name"></td><td class="label-cell">صاحب الطلب</td></tr>
+            <tr><td><input type="date" id="todayDate" style="direction: ltr;"></td><td class="label-cell">تاريخ</td></tr>
+            <tr><td><input type="text" id="color_val"></td><td class="label-cell">اللون</td></tr>
+            <tr><td><input type="text" value="میل" class="system-input" ></td><td class="label-cell">سیستم</td></tr>
+            <tr><td style="padding:0;"><div style="display:flex; width:100%;"><div class="spacer-part">سبیسر16</div><div class="band-part">باند ازرق</div></div></td><td class="label-cell">سبیسر/باند</td></tr>
+            <tr><td><input type="text" id="glass_type"></td><td class="label-cell">نوع الجام</td></tr>
+        </table>
+        <table class="right-side-table">
+            <tr><td colspan="2" class="not-cell">NOT</td></tr>
+            <tr><td colspan="2" style="height:50px;"><input type="text"></td></tr>
+            <tr><td><input type="text" value="2026 / / " style="direction: ltr;"></td><td style="width: 75px;">التاريخ</td></tr>
+            <tr><td><input type="text" style="direction: ltr;"></td><td>ساعة</td></tr>
+            <tr><td><input type="text" style="direction: ltr;"></td><td>رقم</td></tr>
+            <tr><td><input type="text"></td><td>اسم سایق</td></tr>
+        </table>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width:100px;">الاعداد</th><th style="width:20px;">#</th><th style="width:60px;">FONK.</th>
+                <th style="width:50px;">العرض</th><th style="width:50px;">الارتفاع</th><th style="width:50px;">الاتجاة</th>
+                <th style="background:#81d4fa !important; width:50px;">عدد (Q)</th>
+                <th style="background:#f48fb1 !important; width:50px;">اعلى قصا</th><th style="background:#a5d6a7 !important; width:50px;">اسفل قصا</th>
+                <th style="background:#90caf9 !important; width:50px;">سبیسر اطراف</th><th style="background:#ffcc80 !important; width:50px;">اسفل</th>
+                <th style="width:40px;">الشفره</th><th style="width:40px;">عدد شفر</th>
+                <th style="width:50px;">قياس شفر</th><th style="width:70px;">متر مربع</th><th style="width:45px;">الزنجیر</th>
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+        <tfoot>
+            <tr>
+                <td colspan="6" style="border:none;"></td>
+                <td class="footer-total" id="q-total">0</td>
+                <td colspan="7" style="border:none;"></td>
+                <td class="footer-total" id="grand-total">0.000</td>
+                <td style="border:none; text-align:left; padding-left:5px; font-weight:bold; font-size:18px;">m²</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="controls-container no-print">
+        <a href="Dashboard.html" class="action-btn" style="background-color: #34495e;">🏠 گەڕانەوە</a>
+        <button class="action-btn" style="background-color: #27ae60;" onclick="window.print()">🖨️ Print A4</button>
+        <button class="action-btn" style="background-color: #2980b9;" onclick="savePage()">💾 Save to 2026</button>
+        <button class="action-btn" style="background-color: #e74c3c;" onclick="orderGlass()">🖼️ داواکردنی جام</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('todayDate').value = new Date().toISOString().split('T')[0];
+    const tbody = document.getElementById('table-body');
+
+    for (let i = 1; i <= 19; i++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text"></td>
+            <td class="row-num">${i}</td>
+            <td><input type="text" value="TOPLANIR"></td>
+            <td><input class="w-in" type="text" oninput="calculate(this)"></td>
+            <td><input class="h-in" type="text" oninput="calculate(this)"></td>
+            <td><input type="text"></td>
+            <td><input class="q-in" type="text" oninput="calculate(this)"></td>
+            <td class="bg-grey-input"><input class="top-cut" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="bot-cut" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="side-sp" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="bot-sp" readonly tabindex="-1"></td>
+            <td><input type="text" value="12.5"></td>
+            <td class="bg-grey-input"><input class="blade-count" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="blade-size" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="m2-res" value="0.000" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="chain-res" readonly tabindex="-1"></td>`;
+        tbody.appendChild(tr);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        const active = document.activeElement;
+        if (active.tagName !== 'INPUT') return;
+        const row = active.closest('tr');
+        const cell = active.closest('td');
+        if (!row || !cell) return;
+        const colIndex = Array.from(cell.parentElement.children).indexOf(cell);
+        const rowIndex = Array.from(row.parentElement.children).indexOf(row);
+        let nextTarget;
+        if (e.key === "ArrowUp") {
+            if (rowIndex > 0) nextTarget = row.parentElement.children[rowIndex - 1].children[colIndex].querySelector('input');
+        } else if (e.key === "ArrowDown") {
+            if (rowIndex < row.parentElement.children.length - 1) nextTarget = row.parentElement.children[rowIndex + 1].children[colIndex].querySelector('input');
+        } else if (e.key === "ArrowRight") {
+            let nextTd = cell.nextElementSibling;
+            while(nextTd && !nextTd.querySelector('input')) nextTd = nextTd.nextElementSibling;
+            if (nextTd) nextTarget = nextTd.querySelector('input');
+        } else if (e.key === "ArrowLeft") {
+            let prevTd = cell.previousElementSibling;
+            while(prevTd && !prevTd.querySelector('input')) prevTd = prevTd.previousElementSibling;
+            if (prevTd) nextTarget = prevTd.querySelector('input');
+        }
+        if (nextTarget && !nextTarget.readOnly) {
+            e.preventDefault();
+            nextTarget.focus();
+            if (nextTarget.value) nextTarget.select();
+        }
+    });
+
+    function calculate(el) {
+        const row = el.closest('tr'); if (!row) return;
+        const w = parseFloat(row.querySelector('.w-in').value) || 0;
+        const h = parseFloat(row.querySelector('.h-in').value) || 0;
+        const q = parseFloat(row.querySelector('.q-in').value) || 0;
+        
+        if (w > 0 && h > 0) {
+            row.querySelector('.top-cut').value = Math.floor(w - 62);
+            row.querySelector('.bot-cut').value = Math.floor(w - 34);
+            row.querySelector('.bot-sp').value = Math.floor(w - 41);
+            row.querySelector('.blade-size').value = Math.floor(w - 32);
+            row.querySelector('.side-sp').value = Math.floor(h - 69);
+            row.querySelector('.blade-count').value = Math.round(h / 9.7);
+            
+            // جێبەجێکردنی مەرجی زنجیر (Chain Logic)
+            let chainVal = 40;
+            if (h > 2400) chainVal = 150;
+            else if (h > 2000) chainVal = 130;
+            else if (h > 1600) chainVal = 110;
+            else if (h > 1050) chainVal = 90;
+            else if (h > 750) chainVal = 75;
+            else chainVal = 40;
+            
+            row.querySelector('.chain-res').value = chainVal;
+            
+            let res = (w * h) / 1000000;
+            let finalM2 = (res < 1 ? 1 : res) * (q > 0 ? q : 1);
+            row.querySelector('.m2-res').value = finalM2.toFixed(3);
+        } else {
+            row.querySelectorAll('.bg-grey-input input').forEach(i => i.value = "");
+            row.querySelector('.m2-res').value = "0.000";
+        }
+        updateTotals();
+    }
+
+    function updateTotals() {
+        let m2 = 0, qTotal = 0;
+        document.querySelectorAll('.m2-res').forEach(i => m2 += parseFloat(i.value) || 0);
+        document.querySelectorAll('.q-in').forEach(i => qTotal += parseFloat(i.value) || 0);
+        document.getElementById('grand-total').innerText = m2.toFixed(3);
+        document.getElementById('q-total').innerText = qTotal;
+    }
+
+    function savePage() {
+        const data = {
+            company: document.getElementById("company_name").value,
+            owner: document.getElementById("owner_name").value,
+            q_total: document.getElementById("q-total").innerText,
+            m2_total: document.getElementById("grand-total").innerText,
+            color: document.getElementById("color_val").value,
+            glass_type: document.getElementById("glass_type").value,
+            system: "میل 16"
+        };
+        localStorage.setItem('2026_data', JSON.stringify(data));
+        window.location.href = "2026.html";
+    }
+
+    function hideMenu() { if(document.getElementById('excel-menu')) document.getElementById('excel-menu').style.display = 'none'; }
+    
+    function orderGlass() {
+        let allData = [];
+        const company = document.getElementById("company_name").value || "نەزانراو";
+        const owner = document.getElementById("owner_name").value || "نەزانراو";
+        document.querySelectorAll('#table-body tr').forEach((row, index) => {
+            const w = row.querySelector('.w-in').value, h = row.querySelector('.h-in').value, q = row.querySelector('.q-in').value || 1;
+            if (w > 0 && h > 0) allData.push({ w, h, q, num: index + 1 });
+        });
+        if (allData.length > 0) {
+            localStorage.setItem('jam_company_name', company);
+            localStorage.setItem('jam_customer_name', owner);
+            localStorage.setItem('glass_orders_2026', JSON.stringify(allData));
+            window.location.href = "جام میل16.html";
+        } else alert("تکایە سەرەتا قیاسەکان داخل بکە!");
+    }
+</script>
+</body>
+</html>

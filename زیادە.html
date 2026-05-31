@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>Main_System - 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: #f0f2f5; 
+            margin: 0; 
+            user-select: none; 
+            min-width: 1650px; 
+            overflow-x: auto;
+        }
+        /* تەنها ئەم بەشە بۆ مۆبایل زیاد کراوە */
+        body.driver-view { min-width: 1000px !important; }
+        body.driver-view .header-red:nth-child(2), 
+        body.driver-view .header-red:nth-child(9),
+        body.driver-view .header-yellow:nth-child(8),
+        body.driver-view .pr-in, 
+        body.driver-view .tot-in,
+        body.driver-view .gpr,
+        body.driver-view .gtot,
+        body.driver-view .pdf-btn-nav,
+        body.driver-view .archive-btn-nav,
+        body.driver-view .add-btn { display: none !important; }
+        
+        body.driver-view input:not(.driver-editable) { pointer-events: none; background: #eee; }
+        .driver-btn { background: #ffc107; color: black !important; }
+
+        .page { padding: 20px; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .month-tabs { display: flex; flex-wrap: nowrap; gap: 5px; background: #333; padding: 10px; border-radius: 8px 8px 0 0; align-items: center; }
+        .month-btn { padding: 10px 18px; border: none; background: #555; color: white; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .month-btn.active { background: #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.5); }
+        .archive-btn-nav { background: #6f42c1; color: white; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .pdf-btn-nav { background: #dc3545; color: white; border: none; padding: 10px 18px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-right: auto; transition: 0.3s; margin-left: 5px; }
+
+        .table-container { overflow-x: visible; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-radius: 0 0 8px 8px; }
+        table { width: 100%; border-collapse: collapse; min-width: 1600px; display: none; background: white; }
+        table.active-table { display: table; }
+        th { border: 1px solid #ccc; padding: 12px; font-size: 13px; background: #eee; position: sticky; top: 0; z-index: 10; color: black; }
+        td { border: 1px solid #ddd; padding: 0; }
+        .active-table input { width: 100%; height: 40px; border: none; text-align: center; font-size: 14px; outline: none; background: transparent; font-weight: bold; }
+
+        .header-red { background-color: #c00000 !important; color: white !important; }
+        .header-yellow { background-color: #ffff00 !important; color: black !important; }
+        .footer-row { background-color: #333 !important; color: white !important; font-weight: bold; }
+        .row-id { background-color: #eee; font-weight: bold; text-align: center; width: 50px; cursor: cell; border: 1px solid #ccc; }
+        tr.selected-row { background-color: #d1e7ff !important; }
+        
+        .controls { margin: 15px 0; display: flex; align-items: center; gap: 15px; justify-content: space-between; }
+        .search-box { flex-grow: 1; margin: 0 15px; }
+        .search-box input { background: white; border: 2px solid #ddd; border-radius: 25px; padding: 0 20px; height: 45px; text-align: right; width: 100%; max-width: 350px; outline: none; transition: 0.3s; }
+        
+        #context-menu { 
+            position: fixed; 
+            display: none; 
+            background: white; 
+            border: 1px solid #ccc; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3); 
+            z-index: 10000; 
+            padding: 12px 20px; 
+            color: red; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 5px;
+            white-space: nowrap;
+        }
+        .add-btn { background:#28a745; color:white; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:bold; transition: 0.3s; }
+    </style>
+</head>
+<body onmouseup="stopSelecting()">
+
+    <div id="table1-page" class="page">
+        <div class="month-tabs">
+            <div id="tabs-container" style="display: flex; gap: 5px; flex-wrap: nowrap;"></div>
+            <button class="pdf-btn-nav" onclick="generatePDF()">📄 کردن بە PDF</button>
+            <button class="archive-btn-nav" onclick="toggleArchive()">📁 ئەرشیفی ساڵانە</button>
+        </div>
+
+        <div class="controls">
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="add-btn" onclick="addNewRow()">➕ زیادکردنی ڕیز</button>
+                <button class="add-btn" style="background:#6c757d;" onclick="history.back()">⬅️ گەڕانەوە</button>
+                <button class="add-btn" style="background:#007bff;" onclick="exportToExcel()">💾 سەیڤکردن (Excel)</button>
+                <button class="add-btn driver-btn" onclick="toggleDriverMode()">🚚 تایبەت بە سایەق</button>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 گەڕان...">
+            </div>
+
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <div id="monthDisplay" style="font-weight: bold; font-size: 18px; color: #1e3c72;">مانگی ١</div>
+            </div>
+        </div>
+        <div class="table-container" id="tables-wrapper"></div>
+    </div>
+
+    <div id="archiveModal" style="display:none; position: fixed; z-index: 20000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);" onclick="toggleArchive()">
+        <div style="background: white; margin: 10% auto; padding: 20px; border-radius: 10px; width: 300px; text-align: center;" onclick="event.stopPropagation()">
+            <h3>ئەرشیفی ساڵانە</h3>
+            <hr>
+            <a href="#" style="display: block; padding: 10px; margin: 5px; background: #eee; text-decoration: none; color: #333; border-radius: 5px; font-weight: bold;">ساڵی ٢٠٢٦ (ئاکتیڤ)</a>
+            <button class="add-btn" style="background:red; width: 100%; margin-top: 10px;" onclick="toggleArchive()">داخستن</button>
+        </div>
+    </div>
+
+    <div id="context-menu">🗑️ سڕینەوەی ڕیزەکان</div>
+
+    <script>
+        let isSelecting = false;
+        const STORAGE_KEY = 'ds_management_2026_permanent';
+
+        function toggleDriverMode() {
+            document.body.classList.toggle('driver-view');
+            const isDriver = document.body.classList.contains('driver-view');
+            alert(isDriver ? "دۆخی سایەق چالاک بوو (نرخەکان شاردرانەوە)" : "دۆخی بەڕێوەبەر چالاک بوو");
+        }
+
+        function initT1() {
+            const tabs = document.getElementById('tabs-container');
+            const wrap = document.getElementById('tables-wrapper');
+            const currentMonth = new Date().getMonth() + 1;
+            
+            tabs.innerHTML = '';
+            wrap.innerHTML = '';
+            for (let m = 1; m <= 12; m++) {
+                tabs.innerHTML += `<button id="btn-m-${m}" class="month-btn ${m==currentMonth?'active':''}" onclick="switchMonth(${m}, this)">مانگی ${m}</button>`;
+                const table = document.createElement('table');
+                table.id = `table-m-${m}`;
+                table.className = (m==currentMonth) ? 'active-table' : '';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th style="width:50px">#</th>
+                            <th class="header-red">الاسم الشركة</th>
+                            <th class="header-yellow">صاحب الطلبية</th>
+                            <th style="background:#ebf1de">التاريخ</th>
+                            <th class="header-yellow">جاهزة</th>
+                            <th style="background:#fabf8f">عدد</th>
+                            <th style="background:#ebf1de">جمع متر مربع</th>
+                            <th class="header-yellow">$ سعر</th>
+                            <th class="header-red">سعر الكل</th>
+                            <th style="background:#dbe5f1">جام</th>
+                            <th style="background:#92d050">طلب ج</th>
+                            <th style="background:#ebf1de">اللون</th>
+                            <th style="background:#dbe5f1">سیستم</th>
+                            <th style="background:#ccc0da">استلام جام</th>
+                            <th style="background:#fabf8f">حمل</th>
+                            <th class="header-red">اسم سايق</th>
+                        </tr>
+                    </thead>
+                    <tbody class="table-body"></tbody>
+                    <tfoot>
+                        <tr class="footer-row">
+                            <td colspan="6" style="padding:15px; text-align:center;">کۆیی گشتی</td>
+                            <td class="gm2">0.00</td>
+                            <td class="gpr">0.00</td>
+                            <td class="gtot">0</td>
+                            <td colspan="7"></td>
+                        </tr>
+                    </tfoot>`;
+                wrap.appendChild(table);
+                const tbody = table.querySelector('.table-body');
+                for(let i=0; i<15; i++) { createEmptyRow(tbody); }
+            }
+            
+            document.getElementById('monthDisplay').innerText = `مانگی ${currentMonth}`;
+            setTimeout(() => {
+                loadSavedData();
+                checkIncomingData(); 
+            }, 100);
+
+            setInterval(checkIncomingData, 2000);
+        }
+
+        function createEmptyRow(tbody) {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text" value="${new Date().toLocaleDateString('en-GB')}" readonly></td>
+                <td style="text-align:center"><input type="checkbox"></td>
+                <td><input type="number"></td>
+                <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>
+                <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
+                <td><input type="text" class="tot-in" readonly style="color:red; font-weight:bold;"></td>
+                <td><input type="text"></td>
+                <td style="text-align:center"><input type="checkbox"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td><input type="text"></td>
+                <td style="text-align:center"><input type="checkbox" class="driver-editable"></td>
+                <td><input type="text" class="driver-editable"></td>`;
+            tbody.appendChild(tr);
+            renumber(tbody);
+        }
+
+        function checkIncomingData() {
+            const transferData = localStorage.getItem('2026_data');
+            if (transferData) {
+                const data = JSON.parse(transferData);
+                const currentMonth = new Date().getMonth() + 1;
+                const table = document.getElementById(`table-m-${currentMonth}`);
+                const tbody = table.querySelector('.table-body');
+                
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
+                    <td><input type="text" value="${data.company || ''}"></td>
+                    <td><input type="text" value="${data.owner || ''}"></td>
+                    <td><input type="text" value="${new Date().toLocaleDateString('en-GB')}" readonly></td>
+                    <td style="text-align:center"><input type="checkbox"></td>
+                    <td><input type="number" value="${data.q_total || ''}"></td>
+                    <td><input type="number" class="m2-in" oninput="calcT1(this)" value="${data.m2_total || ''}"></td>
+                    <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
+                    <td><input type="text" class="tot-in" readonly style="color:red; font-weight:bold;"></td>
+                    <td><input type="text" value="${data.glass_type || ''}"></td>
+                    <td style="text-align:center"><input type="checkbox"></td>
+                    <td><input type="text" value="${data.color || ''}"></td>
+                    <td><input type="text" value="${data.system || ''}"></td>
+                    <td><input type="text"></td>
+                    <td style="text-align:center"><input type="checkbox" class="driver-editable"></td>
+                    <td><input type="text" class="driver-editable"></td>`;
+                
+                tbody.insertBefore(tr, tbody.firstChild);
+                renumber(tbody);
+                
+                localStorage.removeItem('2026_data'); 
+                saveToLocal();
+                updateTotals();
+            }
+        }
+
+        function saveToLocal() {
+            const allData = {};
+            for (let m = 1; m <= 12; m++) {
+                const table = document.getElementById(`table-m-${m}`);
+                if(!table) continue;
+                const rows = table.querySelectorAll('.table-body tr');
+                const monthData = [];
+                rows.forEach(row => {
+                    const inputs = row.querySelectorAll('input');
+                    const rowVals = [];
+                    inputs.forEach(input => {
+                        rowVals.push(input.type === 'checkbox' ? input.checked : input.value);
+                    });
+                    monthData.push(rowVals);
+                });
+                allData[m] = monthData;
+            }
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
+        }
+
+        function loadSavedData() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                const allData = JSON.parse(saved);
+                for (let m = 1; m <= 12; m++) {
+                    if (!allData[m]) continue;
+                    const table = document.getElementById(`table-m-${m}`);
+                    if(!table) continue;
+                    const tbody = table.querySelector('.table-body');
+                    tbody.innerHTML = ''; 
+                    
+                    allData[m].forEach(rowData => {
+                        createEmptyRow(tbody);
+                        const lastRow = tbody.lastElementChild;
+                        const inputs = lastRow.querySelectorAll('input');
+                        rowData.forEach((val, idx) => {
+                            if (inputs[idx]) {
+                                if (inputs[idx].type === 'checkbox') inputs[idx].checked = val;
+                                else inputs[idx].value = val;
+                            }
+                        });
+                        const m2 = parseFloat(lastRow.querySelector('.m2-in').value) || 0;
+                        const pr = parseFloat(lastRow.querySelector('.pr-in').value) || 0;
+                        lastRow.querySelector('.tot-in').value = Math.round(m2 * pr);
+                    });
+                    renumber(tbody);
+                }
+            }
+            updateTotals();
+        }
+
+        function calcT1(el) {
+            const r = el.closest('tr');
+            if (!r) return;
+            const m2 = parseFloat(r.querySelector('.m2-in').value) || 0;
+            const pr = parseFloat(r.querySelector('.pr-in').value) || 0;
+            const totIn = r.querySelector('.tot-in');
+            if(totIn) totIn.value = Math.round(m2 * pr);
+            updateTotals();
+            saveToLocal();
+        }
+
+        function updateTotals() {
+            const t = document.querySelector('.active-table');
+            if(!t) return;
+            let m2=0, pr=0, tot=0;
+            t.querySelectorAll('.table-body tr').forEach(r => {
+                if(r.style.display !== 'none') {
+                    m2 += parseFloat(r.querySelector('.m2-in').value) || 0;
+                    pr += parseFloat(r.querySelector('.pr-in').value) || 0;
+                    const totVal = r.querySelector('.tot-in') ? r.querySelector('.tot-in').value : 0;
+                    tot += parseFloat(totVal) || 0;
+                }
+            });
+            t.querySelector('.gm2').innerText = m2.toFixed(2);
+            t.querySelector('.gpr').innerText = pr.toFixed(2);
+            t.querySelector('.gtot').innerText = tot;
+        }
+
+        function switchMonth(m, btn) {
+            document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('table').forEach(t => t.classList.remove('active-table'));
+            const targetTable = document.getElementById(`table-m-${m}`);
+            if(targetTable) {
+                targetTable.classList.add('active-table');
+                document.getElementById('monthDisplay').innerText = `مانگی ${m}`;
+                updateTotals();
+            }
+        }
+
+        function addNewRow() {
+            const tbody = document.querySelector('.active-table .table-body');
+            if(tbody) {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
+                    <td><input type="text"></td>
+                    <td><input type="text"></td>
+                    <td><input type="text" value="${new Date().toLocaleDateString('en-GB')}" readonly></td>
+                    <td style="text-align:center"><input type="checkbox"></td>
+                    <td><input type="number"></td>
+                    <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>
+                    <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
+                    <td><input type="text" class="tot-in" readonly style="color:red; font-weight:bold;"></td>
+                    <td><input type="text"></td>
+                    <td style="text-align:center"><input type="checkbox"></td>
+                    <td><input type="text"></td>
+                    <td><input type="text"></td>
+                    <td><input type="text"></td>
+                    <td style="text-align:center"><input type="checkbox" class="driver-editable"></td>
+                    <td><input type="text" class="driver-editable"></td>`;
+                tbody.insertBefore(tr, tbody.firstChild);
+                renumber(tbody);
+            }
+            saveToLocal();
+        }
+
+        function renumber(b) {
+            b.querySelectorAll('tr').forEach((r, i) => {
+                const rowId = r.querySelector('.row-id');
+                if(rowId) rowId.innerText = i + 1;
+            });
+        }
+
+        function filterTable() {
+            const val = document.getElementById('searchInput').value.toLowerCase();
+            document.querySelectorAll('.active-table .table-body tr').forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
+            });
+            updateTotals();
+        }
+
+        function generatePDF() {
+            const element = document.querySelector('.active-table');
+            const monthName = document.getElementById('monthDisplay').innerText;
+            const opt = {
+                margin: 0.2,
+                filename: `Main_System_2026_${monthName}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function exportToExcel() {
+            const activeTable = document.querySelector('table.active-table');
+            if (!activeTable) return;
+            let csvContent = "\uFEFF";
+            const rows = activeTable.querySelectorAll("tr");
+            rows.forEach(row => {
+                const rowData = [];
+                const cols = row.querySelectorAll("th, td");
+                cols.forEach(col => {
+                    const input = col.querySelector('input');
+                    if (input) {
+                        if (input.type === 'checkbox') rowData.push(input.checked ? "بەڵێ" : "نەخێر");
+                        else rowData.push(input.value);
+                    } else rowData.push(col.innerText);
+                });
+                csvContent += rowData.join(",") + "\n";
+            });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Main_System_2026_${document.getElementById('monthDisplay').innerText}.csv`;
+            link.click();
+        }
+
+        function toggleArchive() {
+            const m = document.getElementById('archiveModal');
+            m.style.display = (m.style.display === 'block') ? 'none' : 'block';
+        }
+        
+        function startSelecting(e, c) { if(e.button===0){isSelecting=true; c.parentElement.classList.toggle('selected-row');} }
+        function dragSelecting(c) { if(isSelecting) c.parentElement.classList.add('selected-row'); }
+        function stopSelecting() { isSelecting=false; }
+
+        function handleRightClick(e, c) {
+            e.preventDefault();
+            const m = document.getElementById('context-menu');
+            m.style.display = 'block';
+
+            let posX = e.clientX;
+            let posY = e.clientY;
+            const menuWidth = 180; 
+
+            if (posX + menuWidth > window.innerWidth) {
+                posX = posX - menuWidth; 
+            }
+
+            m.style.left = posX + 'px'; 
+            m.style.top = posY + 'px';
+            
+            c.parentElement.classList.add('selected-row');
+        }
+
+        document.getElementById('context-menu').onclick = () => {
+            document.querySelectorAll('.selected-row').forEach(r => r.remove());
+            document.querySelectorAll('.table-body').forEach(b => renumber(b));
+            updateTotals();
+            saveToLocal();
+        };
+        window.onclick = () => document.getElementById('context-menu').style.display='none';
+        
+        window.onload = initT1;
+        document.addEventListener('input', (e) => {
+            if(e.target.tagName === 'INPUT') saveToLocal();
+        });
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === '2026_data') {
+                checkIncomingData();
+            }
+        });
+    </script>
+</body>
+</html>

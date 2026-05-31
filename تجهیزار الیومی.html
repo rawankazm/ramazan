@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تجهیزات الیومی</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 5mm; /* لێواری لاپەڕە بۆ پرینتەر */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .a4-container {
+            width: 280mm; /* کەمێک کەمکرایەوە بۆ ئەوەی هێڵەکان نەبڕدرێن */
+            margin: 0 auto;
+            background-color: white;
+            padding: 15px;
+            box-sizing: border-box;
+            border-radius: 8px;
+        }
+
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .title { font-size: 26px; font-weight: bold; color: #1a73e8; }
+        .date-box { font-size: 18px; direction: ltr; font-weight: bold; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            border: 1.5px solid #000; /* هێڵی دەوری خشتەکە تۆختر کرا */
+        }
+
+        th, td {
+            border: 1px solid #000; /* هێڵە ناوەکییەکان */
+            text-align: center;
+            padding: 6px 2px;
+            font-size: 13px;
+        }
+
+        th { background-color: #f2f2f2 !important; -webkit-print-color-adjust: exact; }
+
+        /* قەبارەی ستوونەکان */
+        .col-t { width: 35px; }
+        .col-company { width: 140px; }
+        .col-num { width: 45px; }
+        .col-color { width: 40px; }
+        .col-machine { width: 90px; }
+        .col-material { width: 45px; }
+        .col-chain { width: 100px; }
+        .col-inspector { width: 100px; }
+        .col-date { width: 55px; }
+        .col-check { width: 40px; }
+        .col-notes { width: auto; }
+
+        tr { height: 30px; }
+
+        @media print {
+            body { background: none; padding: 0; }
+            .a4-container { width: 98%; box-shadow: none; border: none; }
+            .print-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div style="text-align: center; margin-bottom: 10px;">
+        <button class="print-btn" onclick="window.print()" style="padding: 10px 20px; cursor:pointer;">🖨️ پرینت بکە</button>
+    </div>
+
+    <div class="a4-container">
+        <div class="header-section">
+            <div class="title"> تهجیزات الیومي .</div>
+            <div class="date-box"> 2026 /5 / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-t">ت</th>
+                    <th class="col-company">اسم الشركة</th>
+                    <th class="col-num">العدد</th>
+                    <th class="col-color">اللون</th>
+                    <th class="col-machine">مكينة داخلية</th>
+                    <th class="col-material">جام أو كارتون</th>
+                    <th class="col-chain">قیاس زنجیر</th>
+                    <th class="col-inspector">اسم الفاحص</th>
+                    <th class="col-date">تاریخ استلام</th>
+                    <th class="col-date">تاریخ تسلیم</th>
+                    <th class="col-check">چێک</th>
+                    <th class="col-notes">ملاحظات</th>
+                </tr>
+            </thead>
+            <tbody>
+                <script>
+                    for (let i = 1; i <= 18; i++) {
+                        document.write(`<tr>
+                            <td>${i}</td><td></td><td></td><td></td><td></td><td></td>
+                            <td></td><td></td><td></td><td></td><td><input type="checkbox"></td><td></td>
+                        </tr>`);
+                    }
+                </script>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

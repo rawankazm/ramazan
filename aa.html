@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Connect to Supabase</title>
+</head>
+<body>
+  <h1>Supabase Connect Example</h1>
+  <p id="status">Status: idle</p>
+
+  <!-- Include the Supabase JS client from CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // Replace these with your project's values (found in Supabase Project Settings -> API)
+    const SUPABASE_URL = 'https://omagcunipeyidttbqskt.supabase.co';
+    const SUPABASE_ANON_KEY = 'REPLACE_WITH_ANON_KEY';
+
+    // Initialize
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function testConnection() {
+      document.getElementById('status').textContent = 'Status: testing...';
+      // Example safe request: list up to 1 row from a public table named 'public_table'
+      // Replace 'public_table' with a real table name in your DB.
+      try {
+        const { data, error } = await supabase.from('public_table').select('*').limit(1);
+        if (error) throw error;
+        document.getElementById('status').textContent = 'Status: OK — check console for data';
+        console.log('Supabase query result:', data);
+      } catch (err) {
+        document.getElementById('status').textContent = 'Status: Error — see console';
+        console.error('Supabase error:', err.message || err);
+      }
+    }
+
+    // Run test only if anon key was replaced
+    if (SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'REPLACE_WITH_ANON_KEY') {
+      testConnection();
+    } else {
+      document.getElementById('status').textContent = 'Status: Insert your anon key in the file to run test';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+/* Responsive overrides for 2026.html */
+
+/* General adjustments */
+body { -webkit-font-smoothing:antialiased; }
+
+/* font-face for Speda (Kurdish/Arabic) - place font files in css/fonts or fonts/ */
+@font-face {
+  font-family: 'Speda';
+  src: url('../fonts/Speda-Bold.woff2') format('woff2'),
+       url('../fonts/Speda-Bold.woff') format('woff'),
+       url('../fonts/Speda-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Apply Speda for Kurdish and Arabic; default system font for English */
+html[lang="ku"] , html[lang="ar"] {
+  font-family: 'Speda', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+html[lang="en"] {
+  font-family: Calibri, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Prefer Calibri as the general default when available */
+body {
+  font-family: Calibri, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.month-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.month-tabs::-webkit-scrollbar { height: 8px; }
+
+/* Header controls layout */
+.controls { display:flex; align-items:center; gap:12px; justify-content:space-between; flex-wrap:wrap; padding: 6px 0; }
+.controls > .search-area { flex: 0 0 auto; margin: 0 12px; display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
+.search-area .search-box { width: 260px; }
+.search-area .search-box input { width: 100%; box-sizing: border-box; height:38px; border-radius:28px; padding:0 14px; border:2px solid #eee; background:white; box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+.search-area .monthDisplay { font-weight:bold; font-size:14px; color:#1e3c72; }
+.monthDisplay { display: none !important; }
+.controls > div:first-child { display:flex; gap:10px; align-items:center; }
+
+/* Make the table wrapper scroll horizontally on small screens */
+.table-container { padding: 8px; }
+
+/* Smaller paddings and fonts on narrow screens */
+@media (max-width: 1024px) {
+  .month-btn, .pdf-btn-nav, .archive-btn-nav, .add-btn { padding: 8px 12px; font-size: 14px; }
+  .search-box input { max-width: 100%; height: 40px; }
+  th, td { padding: 8px; font-size: 13px; }
+  .active-table input { height: 36px; font-size: 13px; }
+  .row-id { width: 40px; }
+}
+
+/* Forced mobile class: apply mobile rules when ?mobile=1 or #mobile is used */
+body.force-mobile .active-table th:nth-child(8),
+body.force-mobile .active-table td:nth-child(8),
+body.force-mobile .active-table th:nth-child(9),
+body.force-mobile .active-table td:nth-child(9) {
+  display: none !important;
+}
+body.force-mobile #finalize-btn { display: none !important; }
+body.force-mobile .month-tabs { display: none !important; }
+body.force-mobile .controls > div:first-child { display: none !important; }
+body.force-mobile .search-box { display: block !important; }
+
+/* Hide only the price columns ($ سعر and سعر الكل) on mobile/iPad (<=1024px) */
+@media (max-width: 1024px) {
+  .active-table th:nth-child(8), .active-table td:nth-child(8),
+  .active-table th:nth-child(9), .active-table td:nth-child(9) {
+    display: none !important;
+  }
+  /* hide finalize button on mobile/ipad per user request (option B) */
+  #finalize-btn { display: none !important; }
+  /* hide month tabs, but keep search visible: hide button group and show search-box */
+  .month-tabs { display: none !important; }
+  .controls { display: flex !important; }
+  .controls > div:first-child { display: none !important; } /* hide the left button group */
+  .search-box { display: block !important; }
+}
+
+/* Driver columns and controls remain visible on mobile/ipad — no hiding here */
+
+@media (max-width: 800px) {
+  .controls { flex-direction: column; align-items: stretch; gap: 10px; }
+  .controls > div:first-child { display: flex; gap: 8px; flex-wrap: wrap; }
+  .month-tabs { padding: 8px; }
+  .month-btn { flex: 0 0 auto; }
+  .search-box { order: 3; }
+  .monthDisplay { font-size: 16px; }
+  table { font-size: 12px; }
+  th, td { padding: 6px; }
+  .active-table input { height: 34px; }
+}
+
+/* For very small devices make interactive elements larger and tables scrollable */
+@media (max-width: 420px) {
+  .month-btn, .pdf-btn-nav, .archive-btn-nav, .add-btn { padding: 6px 8px; font-size: 13px; }
+  .search-box input { height: 36px; padding: 0 12px; }
+  .monthDisplay { font-size: 14px; }
+  .row-id { display: table-cell; width: 34px; }
+  th, td { padding: 5px; font-size: 12px; }
+}
+
+/* Keep table layout but enable horizontal scroll; this preserves layout and input fields */
+.table-container { overflow-x: auto; }
+.table-container table { min-width: 900px; }
+
+/* Hide some less-important columns on small screens (adjust if needed) */
+@media (max-width: 760px) {
+  /* hide columns by index to simplify mobile view; adjust indices if layout changes */
+  .active-table th:nth-child(4), .active-table td:nth-child(4),
+  .active-table th:nth-child(6), .active-table td:nth-child(6),
+  .active-table th:nth-child(13), .active-table td:nth-child(13) { display: none; }
+}

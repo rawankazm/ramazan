@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS Partition & Curtain Executive System</title>
+    <style>
+        :root {
+            --executive-blue: #0f172a; 
+            --gold-accent: #b45309;   
+            --silver: #94a3b8;
+            --glass-panel: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body { 
+            margin: 0; padding: 0; 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; 
+            background: #020617 url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(15, 23, 42, 0.6) 0%, rgba(2, 6, 23, 0.9) 100%);
+            z-index: -1;
+        }
+
+        .container { 
+            display: flex; gap: 40px; align-items: center; justify-content: center;
+            width: 100%; padding: 40px; flex-wrap: wrap;
+        }
+
+        .card {
+            width: 300px; height: 380px; 
+            background: var(--glass-panel);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 12px; 
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; 
+            text-decoration: none; color: white;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: center;
+            position: relative;
+        }
+
+        .card:hover { 
+            transform: translateY(-5px); 
+            border-color: var(--gold-accent);
+            background: rgba(30, 41, 59, 0.9);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+        }
+
+        .card::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: var(--gold-accent); border-radius: 12px 12px 0 0;
+        }
+
+        .icon { 
+            font-size: 60px; margin-bottom: 25px; 
+            color: var(--silver);
+            transition: 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .card:hover .icon { color: var(--gold-accent); transform: scale(1.1); }
+
+        .card h2 { 
+            font-weight: 400; margin: 10px 0; font-size: 24px; 
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        .card p { opacity: 0.6; font-size: 13px; font-weight: 300; }
+
+        .hidden-systems { 
+            display: none; gap: 20px; flex-wrap: wrap; justify-content: center;
+            max-width: 1200px; animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .sub-card { 
+            width: 220px; height: 280px; 
+            border-radius: 8px;
+        }
+
+        .close-btn {
+            position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+            background: transparent; 
+            border: 1px solid var(--gold-accent); color: var(--gold-accent);
+            padding: 10px 40px; border-radius: 4px; cursor: pointer;
+            font-weight: bold; transition: 0.3s; text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .close-btn:hover { background: var(--gold-accent); color: white; }
+
+        .window-svg { width: 60px; height: 60px; stroke: currentColor; fill: none; stroke-width: 1.2; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        
+        <!-- Dashboard Main -->
+        <div id="systemsMainCard" class="card system-card" onclick="showSubSystems()">
+            <div class="icon">💼</div>
+            <h2>بەڕێوەبردنی پڕۆژەکان</h2>
+            <p>سیستمی چاودێری و پارتێشن</p>
+        </div>
+
+        <a id="archiveCard" href="2026.html" class="card archive-card">
+            <div class="icon">🏛️</div>
+            <h2>ئەرشیفی ناوەندی</h2>
+            <p>داتا و ڕاپۆرتەکانی 2026</p>
+        </a>
+
+        <div id="supabaseStatus" style="position:fixed;top:16px;right:16px;z-index:99999;background:rgba(15,23,42,0.92);color:#fff;border:1px solid rgba(255,255,255,0.12);padding:10px 14px;border-radius:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,0.35);backdrop-filter:blur(8px);">
+            Supabase: checking...
+        </div>
+
+        <!-- Sub Systems Grid -->
+        <div id="subSystemsArea" class="hidden-systems" style="position: relative;">
+            <button class="close-btn" onclick="hideSubSystems()">گەڕانەوە بۆ پانێڵی سەرەکی</button>
+            
+            <a href="ئۆفیس.html" class="card sub-card">
+                <div class="icon">
+                    <svg class="window-svg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+                </div>
+                <h2>ئۆفیس</h2>
+            </a>
+
+            <a href="میل16.html" class="card sub-card">
+                <div class="icon">📏</div>
+                <h2>MIL 16</h2>
+            </a>
+
+            <a href="میل20.html" class="card sub-card">
+                <div class="icon">📏</div>
+                <h2>MIL 20</h2>
+            </a>
+
+            <a href="المغناطیس16.html" class="card sub-card">
+                <div class="icon">🧲</div>
+                <h2>MAG 16</h2>
+            </a>
+
+            <a href="المغناطیس20.html" class="card sub-card">
+                <div class="icon">🧲</div>
+                <h2>MAG 20</h2>
+            </a>
+
+            <a href="ماطور.html" class="card sub-card">
+                <div class="icon">⚙️</div>
+                <h2>ماطور</h2>
+            </a>
+
+            <a href="سیستم تیل16.html" class="card sub-card">
+                <div class="icon">🌀</div>
+                <h2>TEL 16</h2>
+            </a>
+
+            <a href="تیل20.html" class="card sub-card">
+                <div class="icon">🌀</div>
+                <h2>TEL 20</h2>
+            </a>
+
+            <a href="سلایدینگ.html" class="card sub-card">
+                <div class="icon">
+                    <svg class="window-svg" viewBox="0 0 24 24">
+                        <path d="M13 5H20V19H13M13 5V19M13 5H11M13 19H11M4 9L1 12L4 15M1 12H11M11 5V19M8 9L11 12L8 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h2>سلایدینگ</h2>
+            </a>
+
+            <!-- کارتی نوێ: خارجی -->
+            <a href="خارجی.html" class="card sub-card">
+                <div class="icon">🏢</div>
+                <h2>خارجی</h2>
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const SUPABASE_URL = 'https://wpzynhdcepmoeitaskpg.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_BtUxEXUl4-X93L1Cnt4hMA_sZXRcZU-';
+
+        function showSubSystems() {
+            document.getElementById('systemsMainCard').style.display = 'none';
+            document.getElementById('archiveCard').style.display = 'none';
+            document.getElementById('subSystemsArea').style.display = 'flex';
+        }
+
+        function hideSubSystems() {
+            document.getElementById('systemsMainCard').style.display = 'flex';
+            document.getElementById('archiveCard').style.display = 'flex';
+            document.getElementById('subSystemsArea').style.display = 'none';
+        }
+
+        async function checkSupabaseConnection() {
+            const status = document.getElementById('supabaseStatus');
+            if (!status) return;
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+                    headers: {
+                        apikey: SUPABASE_ANON_KEY,
+                        Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                status.textContent = 'Supabase: connected';
+                status.style.background = 'rgba(22,163,74,0.92)';
+            } catch (error) {
+                status.textContent = 'Supabase: connection failed';
+                status.style.background = 'rgba(185,28,28,0.92)';
+                console.error('Supabase connection check failed:', error);
+            }
+        }
+
+        window.addEventListener('load', checkSupabaseConnection);
+    </script>
+</body>
+</html>

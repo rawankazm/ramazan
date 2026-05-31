@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ku" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS System - خارجي</title>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: white; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+        .controls-container { display: flex; gap: 10px; justify-content: center; margin-top: 20px; padding-bottom: 40px; }
+        .action-btn { padding: 10px 25px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        
+        #excel-menu { position: fixed; display: none; background: #fff; border: 1px solid #ababab; box-shadow: 3px 3px 10px rgba(0,0,0,0.2); z-index: 10000; padding: 10px; width: 180px; border-radius: 4px; }
+        .menu-btn { width: 100%; padding: 5px; border: 1px solid #ccc; background: #f9f9f9; cursor: pointer; font-size: 12px; font-weight: bold; margin-top: 3px; border-radius: 3px; }
+        
+        /* شێوازی خانە دیاریکراوەکان */
+        .selected-cell { background-color: rgba(33, 115, 70, 0.2) !important; outline: 2px solid #217346 !important; z-index: 5; }
+        
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        .page-frame { padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; }
+        .top-header-wrapper { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 8px; height: 180px; position: relative; }
+        .header-left-side { position: absolute; left: 20px; top: 0; display: flex; flex-direction: column; justify-content: space-between; height: 160px; width: 380px; }
+        .header-logo-main { width: 210px; height: auto; }
+        .contact-info { font-size: 14px; color: #000; font-weight: 900; line-height: 1.6; }
+        
+        .info-table { border-collapse: collapse; width: 320px; border: 1.5px solid #000; z-index: 2; }
+        .info-table td { border: 1.2px solid #000; padding: 0px; height: 19px; }
+        .label-cell { background-color: #eee !important; width: 85px; text-align: right; padding-right: 5px; font-weight: bold; font-size: 11.5px; }
+        input { width: 100%; height: 100%; border: none; outline: none; text-align: center; font-weight: bold; background: transparent; box-sizing: border-box; font-size: 14px; }
+        
+        .right-side-table { position: absolute; right: 20px; top: 0; border-collapse: collapse; width: 310px; border: 1.5px solid #000; }
+        .right-side-table td { border: 1.2px solid #000; height: 18px; text-align: right; padding-right: 5px; font-weight: bold; font-size: 11px; }
+        .not-cell { background-color: #eee !important; text-align: center !important; font-size: 16px !important; letter-spacing: 2px; height: 22px !important; }
+        
+        .system-input { color: red !important; font-size: 15px !important; }
+        .spacer-part { flex: 1; background-color: red !important; color: black; text-align: center; font-weight: bold; font-size: 11px; border-right: 1px solid black; line-height: 19px; }
+        
+        table.data-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000; table-layout: fixed; }
+        th { border: 1px solid #000; background-color: #bbb !important; padding: 2px; font-size: 10.5px; text-align: center; font-weight: 900; }
+        td { border: 1px solid #000; height: 22px; text-align: center; padding: 0; position: relative; } 
+        .bg-grey-input { background-color: rgba(200, 200, 200, 0.3) !important; }
+        .row-num { background-color: #ccc !important; font-weight: bold; font-size: 12px; }
+        .footer-total { border: 1.5px solid #000; font-size: 20px !important; font-weight: 900; height: 35px; }
+
+        @media print { 
+            .controls-container, #excel-menu { display: none !important; } 
+            @page { size: A4 landscape; margin: 5mm; } 
+            * { -webkit-print-color-adjust: exact !important; } 
+            .selected-cell { outline: none !important; background-color: transparent !important; }
+        }
+    </style>
+</head>
+<body onclick="hideMenu()">
+
+<div id="excel-menu">
+    <button class="menu-btn" style="color:red; width: 100%;" onclick="clearSelectedContent()">Clear Selection (Delete)</button>
+</div>
+
+<div class="page-frame" id="printable-area">
+    <div class="top-header-wrapper">
+        <div class="header-left-side">
+            <img src="1.png" class="header-logo-main" alt="Logo">
+            <div class="contact-info">
+                <div>📍 100 Meter Street Sanai Cunubi South Erbil</div>
+                <div>📞 +964 751 499 58 99</div>
+                <div>📞 +964 772 499 58 99</div>
+            </div>
+        </div>
+
+        <table class="info-table">
+            <tr><td><input type="text" id="company_name"></td><td class="label-cell">اسم شركة</td></tr>
+            <tr><td><input type="text" id="owner_name"></td><td class="label-cell">صاحب الطلب</td></tr>
+            <tr><td><input type="date" id="todayDate"></td><td class="label-cell">تاريخ</td></tr>
+            <tr><td><input type="text" id="color_val"></td><td class="label-cell">اللون</td></tr>
+            <tr><td><input type="text" value="خارجي" class="system-input" id="sys_name" readonly></td><td class="label-cell">سیستم</td></tr>
+            <tr><td style="padding:0;"><div style="display:flex; width:100%;"><div class="spacer-part">سبیسر25</div></div></td><td class="label-cell">سبیسر</td></tr>
+            <tr><td><input type="text" id="glass_type"></td><td class="label-cell">نوع الجام</td></tr>
+        </table>
+
+        <table class="right-side-table">
+            <tr><td colspan="2" class="not-cell">NOT</td></tr>
+            <tr><td colspan="2" style="height:50px;"><input type="text"></td></tr>
+            <tr><td><input type="text" value="2026 / / "></td><td style="width: 75px;">التاريخ</td></tr>
+            <tr><td><input type="text"></td><td>ساعة</td></tr>
+            <tr><td><input type="text"></td><td>رقم</td></tr>
+            <tr><td><input type="text"></td><td>اسم سایق</td></tr>
+        </table>
+    </div>
+
+    <table class="data-table" id="main-data-table">
+        <thead>
+            <tr>
+                <th style="width:100px;">الاعداد</th><th style="width:20px;">#</th><th style="width:60px;">FONK.</th>
+                <th style="width:50px;">العرض</th><th style="width:50px;">الارتفاع</th><th style="width:50px;">الاتجاة</th>
+                <th style="background:#81d4fa !important; width:50px;">عدد (Q)</th>
+                <th style="background:#f48fb1 !important; width:50px;">اعلى قصا</th><th style="background:#a5d6a7 !important; width:50px;">اسفل قصا</th>
+                <th style="background:#90caf9 !important; width:50px;">سلاید</th><th style="background:#ffcc80 !important; width:50px;">عدد سلاید</th>
+                <th style="width:45px;">عدد شفر</th>
+                <th style="width:70px;">متر مربع</th><th style="width:45px;">الزنجیر</th>
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+        <tfoot>
+            <tr>
+                <td colspan="6" style="border:none;"></td>
+                <td class="footer-total" id="q-total">0</td>
+                <td colspan="5" style="border:none;"></td>
+                <td class="footer-total" id="grand-total">0.000</td>
+                <td style="border:none; text-align:left; padding-left:5px; font-weight:bold; font-size:18px;">m²</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="controls-container no-print">
+        <a href="Dashboard.html" class="action-btn" style="background-color: #34495e;">🏠 گەڕانەوە</a>
+        <button class="action-btn" style="background-color: #27ae60;" onclick="window.print()">🖨️ Print A4</button>
+        <button class="action-btn" style="background-color: #2980b9;" onclick="savePage()">💾 Save to 2026</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('todayDate').value = new Date().toISOString().split('T')[0];
+    const tbody = document.getElementById('table-body');
+    let selectedInputs = new Set();
+    let isMouseDown = false;
+
+    for (let i = 1; i <= 19; i++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" class="selectable"></td>
+            <td class="row-num">${i}</td>
+            <td><input type="text" class="selectable" value="EKSENEL"></td>
+            <td><input class="w-in selectable" type="text" oninput="calculate(this)"></td>
+            <td><input class="h-in selectable" type="text" oninput="calculate(this)"></td>
+            <td><input type="text" class="selectable"></td>
+            <td><input class="q-in selectable" type="text" oninput="calculate(this)"></td>
+            <td class="bg-grey-input"><input class="top-cut" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="bot-cut" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="slide-val" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="slide-count" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="blade-count" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="m2-res" value="0.000" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="chain-res" readonly tabindex="-1"></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function calculate(el) {
+        const row = el.closest('tr');
+        if (!row) return;
+        const w = parseFloat(row.querySelector('.w-in').value) || 0;
+        const h = parseFloat(row.querySelector('.h-in').value) || 0;
+        const q = parseFloat(row.querySelector('.q-in').value) || 0;
+
+        if (w > 0 && h > 0) {
+            row.querySelector('.top-cut').value = (w - 15);
+            row.querySelector('.bot-cut').value = (w - 4);
+            row.querySelector('.slide-val').value = (w - 0);
+            row.querySelector('.slide-count').value = Math.round(h / 2.1);
+            row.querySelector('.blade-count').value = Math.round(h / 1.3 / 10);
+            let chainVal = (h > 2400) ? 150 : (h > 2000) ? 130 : (h > 1600) ? 110 : (h > 1050) ? 90 : (h > 750) ? 75 : 40;
+            row.querySelector('.chain-res').value = chainVal;
+            let res = (w * h) / 1000000;
+            let finalM2 = (res < 1 ? 1 : res) * (q > 0 ? q : 1);
+            row.querySelector('.m2-res').value = finalM2.toFixed(3);
+        } else {
+            ['.top-cut','.bot-cut','.slide-val','.slide-count','.blade-count','.chain-res'].forEach(s=>row.querySelector(s).value="");
+            row.querySelector('.m2-res').value = "0.000";
+        }
+        updateTotals();
+    }
+
+    function updateTotals() {
+        let m2 = 0, qTotal = 0;
+        document.querySelectorAll('.m2-res').forEach(i => m2 += parseFloat(i.value) || 0);
+        document.querySelectorAll('.q-in').forEach(i => qTotal += parseFloat(i.value) || 0);
+        document.getElementById('grand-total').innerText = m2.toFixed(3);
+        document.getElementById('q-total').innerText = qTotal;
+    }
+
+    // لۆژیکی دیاریکردن و ڕەشکردنەوەی بەکۆمەڵ
+    document.addEventListener('mousedown', (e) => {
+        if (e.target.classList.contains('selectable')) {
+            isMouseDown = true;
+            if (!e.ctrlKey) clearSelection();
+            addToSelection(e.target);
+        } else if (!e.target.closest('#excel-menu')) {
+            clearSelection();
+        }
+    });
+
+    document.addEventListener('mouseover', (e) => {
+        if (isMouseDown && e.target.classList.contains('selectable')) {
+            addToSelection(e.target);
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isMouseDown = false;
+    });
+
+    function addToSelection(input) {
+        input.classList.add('selected-cell');
+        selectedInputs.add(input);
+    }
+
+    function clearSelection() {
+        selectedInputs.forEach(input => input.classList.remove('selected-cell'));
+        selectedInputs.clear();
+    }
+
+    function clearSelectedContent() {
+        selectedInputs.forEach(input => {
+            input.value = "";
+            calculate(input);
+        });
+        hideMenu();
+    }
+
+    // کیبۆرد (Delete و سەهمەکان)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "Delete") {
+            clearSelectedContent();
+        }
+        
+        const active = document.activeElement;
+        if (active.tagName !== 'INPUT') return;
+        const td = active.parentElement;
+        const tr = td.parentElement;
+        const colIndex = Array.from(tr.children).indexOf(td);
+
+        if (e.key === "ArrowUp" && tr.previousElementSibling) {
+            tr.previousElementSibling.children[colIndex].querySelector('input')?.focus();
+        } else if (e.key === "ArrowDown" && tr.nextElementSibling) {
+            tr.nextElementSibling.children[colIndex].querySelector('input')?.focus();
+        } else if (e.key === "ArrowLeft" && td.previousElementSibling) {
+            td.previousElementSibling.querySelector('input')?.focus();
+        } else if (e.key === "ArrowRight" && td.nextElementSibling) {
+            td.nextElementSibling.querySelector('input')?.focus();
+        }
+    });
+
+    function hideMenu() { document.getElementById('excel-menu').style.display = 'none'; }
+    document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'INPUT') {
+            e.preventDefault();
+            const menu = document.getElementById('excel-menu');
+            menu.style.display = 'block';
+            menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+        }
+    });
+
+    function savePage() {
+        const sharedData = {
+            company: document.getElementById("company_name").value,
+            owner: document.getElementById("owner_name").value,
+            q_total: document.getElementById("q-total").innerText,
+            m2_total: document.getElementById("grand-total").innerText,
+            glass_type: document.getElementById("glass_type").value,
+            color: document.getElementById("color_val").value,
+            date: document.getElementById("todayDate").value,
+            system: "خارجي"
+        };
+        localStorage.setItem('2026_data', JSON.stringify(sharedData));
+        window.location.assign("2026.html");
+    }
+</script>
+</body>
+</html>

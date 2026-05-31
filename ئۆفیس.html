@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="ku" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DS System - Matour 16 Full Width</title>
+    <style>
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: white; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+        
+        /* گۆڕینی ئەم بەشە بۆ ئەوەی پر بە شاشە بێت */
+        .page-frame { padding: 10px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+        
+        .controls-container { display: flex; gap: 10px; justify-content: center; margin-top: 20px; padding-bottom: 40px; }
+        .action-btn { padding: 10px 25px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        
+        #excel-menu { position: fixed; display: none; background: #fff; border: 1px solid #ababab; box-shadow: 3px 3px 10px rgba(0,0,0,0.2); z-index: 10000; padding: 10px; width: 180px; border-radius: 4px; }
+        .menu-section { border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; }
+        .color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 8px; }
+        .color-opt { width: 25px; height: 25px; border: 1px solid #ddd; cursor: pointer; border-radius: 3px; }
+        .menu-btn { width: 100%; padding: 5px; border: 1px solid #ccc; background: #f9f9f9; cursor: pointer; font-size: 12px; font-weight: bold; margin-top: 3px; border-radius: 3px; }
+        .tool-label { font-size: 10px; color: #666; font-weight: bold; margin-bottom: 3px; display: block; }
+        
+        .selected-cell { outline: 2px solid #217346 !important; background-color: rgba(33, 115, 70, 0.15) !important; z-index: 99; }
+        
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        .top-header-wrapper { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 8px; height: 180px; position: relative; width: 100%; }
+        .header-left-side { position: absolute; left: 20px; top: 0; display: flex; flex-direction: column; justify-content: space-between; height: 160px; width: 380px; }
+        .header-logo-main { width: 210px; height: auto; }
+        .contact-info { font-size: 14px; color: #000; font-weight: 900; line-height: 1.6; }
+        
+        .info-table { border-collapse: collapse; width: 320px; border: 1.5px solid #000; z-index: 2; }
+        .info-table td { border: 1.2px solid #000; padding: 0px; height: 19px; }
+        .label-cell { background-color: #eee !important; width: 85px; text-align: right; padding-right: 5px; font-weight: bold; font-size: 11.5px; }
+        input { width: 100%; height: 100%; border: none; outline: none; text-align: center; font-weight: bold; background: transparent; box-sizing: border-box; font-size: 14px; }
+        
+        .right-side-table { position: absolute; right: 20px; top: 0; border-collapse: collapse; width: 310px; border: 1.5px solid #000; }
+        .right-side-table td { border: 1.2px solid #000; height: 18px; text-align: right; padding-right: 5px; font-weight: bold; font-size: 11px; }
+        .not-cell { background-color: #eee !important; text-align: center !important; font-size: 16px !important; letter-spacing: 2px; height: 22px !important; }
+        
+        .system-input { color: red !important; font-size: 15px !important; }
+        .spacer-part { flex: 1; background-color: red !important; color: black; text-align: center; font-weight: bold; font-size: 11px; border-right: 1px solid black; line-height: 19px; }
+        .band-part { flex: 1; background-color: white; color: black; text-align: center; font-weight: bold; font-size: 11px; line-height: 19px; }
+        
+        /* خشتەکە هەموو پانایی شاشەکە دەگرێتەوە */
+        table.data-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000; table-layout: fixed; }
+        th { border: 1px solid #000; background-color: #bbb !important; padding: 2px; font-size: 10.5px; text-align: center; font-weight: 900; }
+        td { border: 1px solid #000; height: 22px; text-align: center; padding: 0; position: relative; } 
+        .bg-grey-input { background-color: rgba(200, 200, 200, 0.3) !important; }
+        .row-num { background-color: #ccc !important; font-weight: bold; font-size: 12px; }
+        .footer-total { border: 1.5px solid #000; font-size: 24px !important; font-weight: 900; height: 35px; }
+
+        @media print { 
+            .controls-container, #excel-menu { display: none !important; } 
+            @page { size: A4 landscape; margin: 5mm; } 
+            * { -webkit-print-color-adjust: exact !important; } 
+            .selected-cell { outline: none !important; background-color: transparent !important; }
+            .page-frame { width: 100%; padding: 0; }
+        }
+    </style>
+</head>
+<body onclick="hideMenu()">
+
+<div id="excel-menu">
+    <div class="menu-section">
+        <span class="tool-label">Alignment:</span>
+        <div style="display: flex; gap: 4px;">
+            <button class="menu-btn" onclick="applyExcelStyle('textAlign', 'left')">L</button>
+            <button class="menu-btn" onclick="applyExcelStyle('textAlign', 'center')">C</button>
+            <button class="menu-btn" onclick="applyExcelStyle('textAlign', 'right')">R</button>
+        </div>
+    </div>
+    <div class="menu-section">
+        <span class="tool-label">Colors:</span>
+        <div class="color-grid">
+            <div class="color-opt" style="background:#ffffff;" onclick="applyExcelStyle('backgroundColor', '#ffffff')"></div>
+            <div class="color-opt" style="background:#ffeb3b;" onclick="applyExcelStyle('backgroundColor', '#ffeb3b')"></div>
+            <div class="color-opt" style="background:#4caf50;" onclick="applyExcelStyle('backgroundColor', '#4caf50')"></div>
+            <div class="color-opt" style="background:#f44336;" onclick="applyExcelStyle('backgroundColor', '#f44336')"></div>
+        </div>
+    </div>
+    <button class="menu-btn" style="color:red;" onclick="applyExcelStyle('clearContent')">Clear Selection</button>
+</div>
+
+<div class="page-frame" id="printable-area">
+    <div class="top-header-wrapper">
+        <div class="header-left-side">
+            <img src="1.png" class="header-logo-main" alt="Logo">
+            <div class="contact-info">
+                <div>📍 100 Meter Street Sanai Cunubi South Erbil</div>
+                <div>📞 +964 751 499 58 99</div>
+                <div>📞 +964 772 499 58 99</div>
+            </div>
+        </div>
+
+        <table class="info-table">
+            <tr><td><input type="text" id="company_name"></td><td class="label-cell">اسم شركة</td></tr>
+            <tr><td><input type="text" id="owner_name"></td><td class="label-cell">صاحب الطلب</td></tr>
+            <tr><td><input type="date" id="todayDate"></td><td class="label-cell">تاريخ</td></tr>
+            <tr><td><input type="text" id="color_val"></td><td class="label-cell">اللون</td></tr>
+            <tr><td><input type="text" value="ئۆفیس" class="system-input" id="sys_name" readonly></td><td class="label-cell">سیستم</td></tr>
+            <tr><td style="padding:0;"><div style="display:flex; width:100%;"><div class="spacer-part">سبیسر25</div><div class="band-part">باند ازرق</div></div></td><td class="label-cell">سبیسر/باند</td></tr>
+            <tr><td><input type="text" id="glass_type"></td><td class="label-cell">نوع الجام</td></tr>
+        </table>
+
+        <table class="right-side-table">
+            <tr><td colspan="2" class="not-cell">NOT</td></tr>
+            <tr><td colspan="2" style="height:50px;"><input type="text"></td></tr>
+            <tr><td><input type="text" value="2026 / / "></td><td style="width: 75px;">التاريخ</td></tr>
+            <tr><td><input type="text"></td><td>ساعة</td></tr>
+            <tr><td><input type="text"></td><td>رقم</td></tr>
+            <tr><td><input type="text"></td><td>اسم سایق</td></tr>
+        </table>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <!-- ستوونی "الاعداد" پانتایەکی زۆری پێدراوە و ئەوانی تر بە یەکسانی دابەشکراون -->
+                <th style="width:25%;">الاعداد</th>
+                <th style="width:30px;">#</th>
+                <th>العرض (D)</th>
+                <th>الارتفاع (E)</th>
+                <th>الاتجاة</th>
+                <th style="background:#81d4fa !important;">عدد (Q)</th>
+                <th style="background:#f48fb1 !important;">اعلى قصا</th>
+                <th style="background:#a5d6a7 !important;">اسفل قصا</th>
+                <th>عدد سلاید</th>
+                <th>سلاید</th>
+                <th style="width:100px;">متر مربع</th>
+            </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5" style="border:none;"></td>
+                <td class="footer-total" id="q-total">0</td>
+                <td colspan="4" style="border:none;"></td>
+                <td class="footer-total" id="grand-total">0.000</td>
+                <td style="border:none; text-align:left; padding-left:5px; font-weight:bold; font-size:18px;">m²</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="controls-container no-print">
+        <a href="Dashboard.html" class="action-btn" style="background-color: #34495e;">🏠 گەڕانەوە</a>
+        <button class="action-btn" style="background-color: #27ae60;" onclick="window.print()">🖨️ Print A4</button>
+        <button class="action-btn" style="background-color: #2980b9;" onclick="savePage()">💾 Save to 2026</button>
+        <button class="action-btn" style="background-color: #e74c3c;" onclick="orderGlass()">🖼️ داواکردنی جام</button>
+    </div>
+</div>
+
+<script>
+    document.getElementById('todayDate').value = new Date().toISOString().split('T')[0];
+    const tbody = document.getElementById('table-body');
+    let isEditingMode = false; 
+    let undoStack = []; 
+
+    for (let i = 1; i <= 19; i++) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text"></td>
+            <td class="row-num">${i}</td>
+            <td><input class="w-in" type="text" oninput="calculate(this)"></td>
+            <td><input class="h-in" type="text" oninput="calculate(this)"></td>
+            <td><input type="text"></td>
+            <td><input class="q-in" type="text" oninput="calculate(this)"></td>
+            <td class="bg-grey-input"><input class="top-cut" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="bot-cut" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="slide-count" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="slide-size" readonly tabindex="-1"></td>
+            <td class="bg-grey-input"><input class="m2-res" value="0.000" readonly tabindex="-1"></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function calculate(el) {
+        const row = el.closest('tr');
+        if (!row) return;
+        
+        const w = parseFloat(row.querySelector('.w-in').value) || 0;
+        const h = parseFloat(row.querySelector('.h-in').value) || 0;
+        const q = parseFloat(row.querySelector('.q-in').value) || 0;
+
+        if (w > 0 && h > 0) {
+            row.querySelector('.top-cut').value = (w - 3).toFixed(0);
+            row.querySelector('.bot-cut').value = (w - 3).toFixed(0);
+            row.querySelector('.slide-count').value = (h / 2.1).toFixed(1);
+            row.querySelector('.slide-size').value = (w - 0).toFixed(0);
+
+            let res = (w * h) / 1000000;
+            let finalM2 = (res < 1 ? 1 : res) * (q > 0 ? q : 1);
+            row.querySelector('.m2-res').value = finalM2.toFixed(3);
+        } else {
+            row.querySelector('.top-cut').value = "";
+            row.querySelector('.bot-cut').value = "";
+            row.querySelector('.slide-count').value = "";
+            row.querySelector('.slide-size').value = "";
+            row.querySelector('.m2-res').value = "0.000";
+        }
+        updateTotals();
+    }
+
+    function updateTotals() {
+        let m2 = 0, qTotal = 0;
+        document.querySelectorAll('.m2-res').forEach(i => m2 += parseFloat(i.value) || 0);
+        document.querySelectorAll('.q-in').forEach(i => qTotal += parseFloat(i.value) || 0);
+        document.getElementById('grand-total').innerText = m2.toFixed(3);
+        document.getElementById('q-total').innerText = qTotal;
+    }
+
+    function saveState() {
+        const currentState = Array.from(document.querySelectorAll('input')).map(input => ({
+            id: input, val: input.value, style: input.style.cssText
+        }));
+        undoStack.push(currentState);
+        if (undoStack.length > 50) undoStack.shift();
+    }
+
+    function performUndo() {
+        if (undoStack.length > 0) {
+            const lastState = undoStack.pop();
+            lastState.forEach(item => {
+                item.id.value = item.val;
+                item.id.style.cssText = item.style;
+                calculate(item.id);
+            });
+        }
+    }
+
+    let isMouseDown = false;
+    let startCell = null;
+
+    tbody.addEventListener('mousedown', (e) => {
+        if (e.target.tagName === 'INPUT') {
+            isMouseDown = true;
+            startCell = e.target.closest('td');
+            if (!e.ctrlKey) clearSelection();
+            selectTo(startCell);
+            isEditingMode = false;
+        }
+    });
+
+    tbody.addEventListener('mouseover', (e) => {
+        if (isMouseDown && e.target.tagName === 'INPUT') {
+            selectTo(e.target.closest('td'));
+        }
+    });
+
+    window.addEventListener('mouseup', () => isMouseDown = false);
+
+    function selectTo(endCell) {
+        if (!startCell || !endCell) return;
+        clearSelection();
+        const startRow = startCell.parentElement.rowIndex;
+        const endRow = endCell.parentElement.rowIndex;
+        const startCol = startCell.cellIndex;
+        const endCol = endCell.cellIndex;
+        const rStart = Math.min(startRow, endRow), rEnd = Math.max(startRow, endRow);
+        const cStart = Math.min(startCol, endCol), cEnd = Math.max(startCol, endCol);
+        const rows = tbody.parentElement.rows;
+        for (let i = rStart; i <= rEnd; i++) {
+            for (let j = cStart; j <= cEnd; j++) {
+                const cell = rows[i]?.cells[j];
+                if (cell) cell.classList.add('selected-cell');
+            }
+        }
+    }
+
+    function clearSelection() {
+        document.querySelectorAll('.selected-cell').forEach(el => el.classList.remove('selected-cell'));
+    }
+
+    document.addEventListener('copy', (e) => {
+        const selected = document.querySelectorAll('.selected-cell input');
+        if (selected.length === 0) return;
+        let copyText = "";
+        let lastRow = selected[0].closest('tr');
+        selected.forEach((input, index) => {
+            const currentRow = input.closest('tr');
+            if (currentRow !== lastRow) {
+                copyText += "\n";
+                lastRow = currentRow;
+            } else if (index !== 0) {
+                copyText += "\t";
+            }
+            copyText += input.value;
+        });
+        e.clipboardData.setData('text/plain', copyText);
+        e.preventDefault();
+    });
+
+    document.addEventListener('paste', (e) => {
+        const selectedCells = Array.from(document.querySelectorAll('.selected-cell'));
+        if (selectedCells.length === 0) return;
+        saveState();
+        e.preventDefault();
+        const clipboardData = (e.clipboardData || window.clipboardData).getData('text');
+        const rowsData = clipboardData.split(/\r?\n/).filter(row => row !== "");
+        const gridData = rowsData.map(row => row.split('\t'));
+        const dataRows = gridData.length;
+        const dataCols = gridData[0].length;
+        selectedCells.forEach((cell, index) => {
+            const input = cell.querySelector('input');
+            if (input && !input.readOnly) {
+                const r = Math.floor(index / (selectedCells.length / dataRows)) % dataRows;
+                const c = index % dataCols;
+                const val = gridData[r][c] || gridData[0][0];
+                input.value = val.trim();
+                calculate(input);
+            }
+        });
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 'z') { e.preventDefault(); performUndo(); return; }
+        const input = e.target; 
+        if (input.tagName !== 'INPUT' || input.readOnly) return;
+        const cell = input.closest('td');
+        const row = cell.parentElement;
+        const colIdx = Array.from(row.children).indexOf(cell);
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab'].includes(e.key)) {
+            const isAtStart = input.selectionStart === 0;
+            const isAtEnd = input.selectionEnd === input.value.length;
+            let shouldMove = !isEditingMode || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter' || (e.key === 'ArrowLeft' && isAtStart) || (e.key === 'ArrowRight' && isAtEnd) || e.key === 'Tab';
+            if (shouldMove) {
+                e.preventDefault();
+                isEditingMode = false; 
+                let targetCell = null;
+                if (e.key === 'ArrowUp') targetCell = row.previousElementSibling?.children[colIdx];
+                if (e.key === 'ArrowDown' || e.key === 'Enter') targetCell = row.nextElementSibling?.children[colIdx];
+                if (e.key === 'ArrowLeft') targetCell = cell.previousElementSibling;
+                if (e.key === 'ArrowRight' || e.key === 'Tab') targetCell = cell.nextElementSibling;
+                if (targetCell) {
+                    const targetInput = targetCell.querySelector('input');
+                    if (targetInput && !targetInput.readOnly) {
+                        clearSelection();
+                        targetCell.classList.add('selected-cell');
+                        targetInput.focus();
+                        targetInput.select();
+                    }
+                }
+            }
+        } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !isEditingMode) {
+            saveState();
+            input.value = "";
+            isEditingMode = true; 
+        }
+    });
+
+    function applyExcelStyle(prop, val) {
+        saveState();
+        document.querySelectorAll('.selected-cell input').forEach(input => {
+            if (prop === 'clearContent') { input.value = ""; calculate(input); } 
+            else { input.style[prop] = val; }
+        });
+    }
+
+    function orderGlass() {
+        let allData = [];
+        const company = document.getElementById("company_name").value || "نەزانراو";
+        const owner = document.getElementById("owner_name").value || "نەزانراو";
+        document.querySelectorAll('#table-body tr').forEach((row, index) => {
+            const w = row.querySelector('.w-in').value, h = row.querySelector('.h-in').value, q = row.querySelector('.q-in').value || 1;
+            if (w > 0 && h > 0) allData.push({ w, h, q, num: index + 1 });
+        });
+        if (allData.length > 0) {
+            localStorage.setItem('jam_company_name', company);
+            localStorage.setItem('jam_customer_name', owner);
+            localStorage.setItem('glass_orders_2026', JSON.stringify(allData));
+            window.location.href = "جام ئۆفیس.html";
+        } else alert("تکایە سەرەتا قیاسەکان داخل بکە!");
+    }
+
+    function savePage() {
+        const sharedData = {
+            company: document.getElementById("company_name").value,
+            owner: document.getElementById("owner_name").value,
+            q_total: document.getElementById("q-total").innerText,
+            m2_total: document.getElementById("grand-total").innerText,
+            glass_type: document.getElementById("glass_type").value,
+            color: document.getElementById("color_val").value,
+            date: document.getElementById("todayDate").value,
+            system: "ئۆفیس"
+        };
+        
+        let rows = [];
+        document.querySelectorAll('#table-body tr').forEach(tr => {
+             let w = tr.querySelector('.w-in').value;
+             let h = tr.querySelector('.h-in').value;
+             if(w && h) {
+                 rows.push({
+                     w: w, 
+                     h: h, 
+                     q: tr.querySelector('.q-in').value, 
+                     m2: tr.querySelector('.m2-res').value
+                 });
+             }
+        });
+
+        localStorage.setItem('2026_data', JSON.stringify(sharedData));
+        localStorage.setItem('2026_table_rows', JSON.stringify(rows));
+        window.location.href = "2026.html";
+    }
+
+    document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'INPUT') {
+            e.preventDefault();
+            const menu = document.getElementById('excel-menu');
+            menu.style.display = 'block';
+            menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+        }
+    });
+
+    function hideMenu() { document.getElementById('excel-menu').style.display = 'none'; }
+</script>
+</body>
+</html>

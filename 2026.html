@@ -322,6 +322,33 @@
             }
         }
 
+        function adjustInputWidth(input) {
+            if (!input || input.type === 'checkbox' || input.type === 'number') return;
+            const cell = input.closest('td');
+            if (cell && cell.cellIndex === 3) return;
+            
+            const text = input.value || input.placeholder || '';
+            const tempSpan = document.createElement('span');
+            tempSpan.style.visibility = 'hidden';
+            tempSpan.style.position = 'absolute';
+            tempSpan.style.whiteSpace = 'pre';
+            tempSpan.style.font = window.getComputedStyle(input).font;
+            tempSpan.textContent = text;
+            document.body.appendChild(tempSpan);
+            const width = tempSpan.getBoundingClientRect().width;
+            document.body.removeChild(tempSpan);
+            
+            const minWidth = (cell && (cell.cellIndex === 1 || cell.cellIndex === 2)) ? 160 : 100;
+            const finalWidth = Math.max(width + 24, minWidth);
+            input.style.width = finalWidth + 'px';
+        }
+
+        function adjustAllInputsWidth() {
+            document.querySelectorAll('table input').forEach(input => {
+                adjustInputWidth(input);
+            });
+        }
+
         async function triggerManualSave() {
             saveToLocal();
             if (supabaseClient) {
@@ -611,6 +638,7 @@
                 }
             }
             updateEmptyRowDates();
+            adjustAllInputsWidth();
         }
 
         function calcT1(el) {
@@ -644,6 +672,7 @@
         function switchMonth(m, btn) {
             activeMonthGlobal = m;
             updateEmptyRowDates();
+            adjustAllInputsWidth();
             document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             document.querySelectorAll('table').forEach(t => t.classList.remove('active-table'));
@@ -679,6 +708,7 @@
                 tbody.insertBefore(tr, tbody.firstChild);
                 renumber(tbody);
                 applyDriverEditModeBasedOnViewport();
+                adjustAllInputsWidth();
             }
             saveToLocal();
         }
@@ -780,7 +810,10 @@
         window.onload = initT1;
         window.addEventListener('resize', applyDriverEditModeBasedOnViewport);
         document.addEventListener('input', (e) => {
-            if(e.target.tagName === 'INPUT') saveToLocal();
+            if(e.target.tagName === 'INPUT') {
+                saveToLocal();
+                adjustInputWidth(e.target);
+            }
         });
 
         // --- Localization ---

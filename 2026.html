@@ -512,6 +512,11 @@
                                     else inputs[idx].value = val;
                                 }
                             });
+                            if (inputs[0] && inputs[1] && inputs[2]) {
+                                if (!inputs[0].value.trim() && !inputs[1].value.trim()) {
+                                    inputs[2].value = getDefaultDateString(m);
+                                }
+                            }
                             const m2 = parseFloat(lastRow.querySelector('.m2-in').value) || 0;
                             const pr = parseFloat(lastRow.querySelector('.pr-in').value) || 0;
                             lastRow.querySelector('.tot-in').value = Math.round(m2 * pr);

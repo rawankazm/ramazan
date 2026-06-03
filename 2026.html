@@ -536,14 +536,24 @@
                         const tbody = table.querySelector('.table-body');
                         tbody.innerHTML = ''; 
                         
-                        allData[m].forEach(rowData => {
+                        allData[m].forEach((rowData, trIndex) => {
                             createEmptyRow(tbody, m);
                             const lastRow = tbody.lastElementChild;
                             const inputs = lastRow.querySelectorAll('input');
                             rowData.forEach((val, idx) => {
                                 if (inputs[idx]) {
-                                    if (inputs[idx].type === 'checkbox') inputs[idx].checked = val;
-                                    else inputs[idx].value = val;
+                                    const isCurrentlyActive = activeInfo && 
+                                        activeInfo.tableId === table.id && 
+                                        activeInfo.trIndex === trIndex && 
+                                        activeInfo.tdIndex === idx + 1;
+                                    
+                                    if (isCurrentlyActive) {
+                                        if (inputs[idx].type === 'checkbox') inputs[idx].checked = activeEl.checked;
+                                        else inputs[idx].value = activeEl.value;
+                                    } else {
+                                        if (inputs[idx].type === 'checkbox') inputs[idx].checked = val;
+                                        else inputs[idx].value = val;
+                                    }
                                 }
                             });
                             if (inputs[0] && inputs[1] && inputs[2]) {

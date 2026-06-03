@@ -288,6 +288,12 @@
             return `${day}/${month}/${year}`;
         }
 
+        function isEmptyString(str) {
+            if (str === null || str === undefined) return true;
+            const cleaned = String(str).trim();
+            return cleaned === '' || cleaned === 'null' || cleaned === 'undefined' || /^[ \s\u00A0\u200B]*$/.test(cleaned);
+        }
+
         function updateEmptyRowDates() {
             for (let m = 1; m <= 12; m++) {
                 const table = document.getElementById(`table-m-${m}`);
@@ -296,7 +302,7 @@
                 rows.forEach(row => {
                     const inputs = row.querySelectorAll('input');
                     if (inputs[0] && inputs[1] && inputs[2]) {
-                        if (!inputs[0].value.trim() && !inputs[1].value.trim()) {
+                        if (isEmptyString(inputs[0].value) && isEmptyString(inputs[1].value)) {
                             inputs[2].value = getDefaultDateString(m);
                         } else {
                             const dateVal = inputs[2].value.trim();
@@ -541,7 +547,7 @@
                                 }
                             });
                             if (inputs[0] && inputs[1] && inputs[2]) {
-                                if (!inputs[0].value.trim() && !inputs[1].value.trim()) {
+                                if (isEmptyString(inputs[0].value) && isEmptyString(inputs[1].value)) {
                                     inputs[2].value = getDefaultDateString(m);
                                 }
                             }

@@ -298,6 +298,18 @@
                     if (inputs[0] && inputs[1] && inputs[2]) {
                         if (!inputs[0].value.trim() && !inputs[1].value.trim()) {
                             inputs[2].value = getDefaultDateString(m);
+                        } else {
+                            const dateVal = inputs[2].value.trim();
+                            const parts = dateVal.split('/');
+                            if (parts.length === 3) {
+                                const day = parts[0];
+                                const month = parts[1];
+                                const year = parts[2];
+                                const targetMonthStr = String(m).padStart(2, '0');
+                                if (month !== targetMonthStr) {
+                                    inputs[2].value = `${day}/${targetMonthStr}/${year}`;
+                                }
+                            }
                         }
                     }
                 });

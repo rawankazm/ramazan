@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Main_System - 2026</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
@@ -188,6 +188,14 @@
             setTimeout(() => {
                 loadSavedData();
                 checkIncomingData(); 
+                // Pull remote data on load & start listening to updates
+                if (typeof pullAllStatesFromRemote === 'function') {
+                    pullAllStatesFromRemote().then(() => {
+                        if (typeof subscribeToRemoteSync === 'function') {
+                            subscribeToRemoteSync();
+                        }
+                    });
+                }
             }, 100);
 
             setInterval(checkIncomingData, 2000);
@@ -253,6 +261,103 @@
             }
         }
 
+        // --- Supabase Realtime Sync Configuration ---
+        const SUPABASE_URL = 'https://wpzynhdcepmoeitaskpg.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_BtUxEXUl4-X93L1Cnt4hMA_sZXRcZU-';
+        const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        const SYNC_SCOPE = 'client';
+        const SYNC_ID = 'shared_ramazan_2026';
+        let isSyncingFromRemote = false;
+        let pushDebounceTimer = null;
+
+        // Function to push a state key to Supabase
+        function pushStateToRemote(key, value) {
+            if (!supabase || isSyncingFromRemote) return;
+            if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
+            pushDebounceTimer = setTimeout(async () => {
+                try {
+                    const { error } = await supabase
+                        .from('project_state')
+                        .upsert({
+                            sync_scope: SYNC_SCOPE,
+                            sync_id: SYNC_ID,
+                            state_key: key,
+                            state_value: value,
+                            updated_at: new Date().toISOString()
+                        }, {
+                            onConflict: 'sync_scope,sync_id,state_key'
+                        });
+                    if (error) console.error('Supabase push error:', error.message);
+                } catch (err) {
+                    console.error('Failed to push state:', err);
+                }
+            }, 500);
+        }
+
+        // Function to pull all states from Supabase on load
+        async function pullAllStatesFromRemote() {
+            if (!supabase) return;
+            try {
+                const { data, error } = await supabase
+                    .from('project_state')
+                    .select('state_key, state_value')
+                    .eq('sync_scope', SYNC_SCOPE)
+                    .eq('sync_id', SYNC_ID);
+                
+                if (error) throw error;
+                
+                if (data && data.length > 0) {
+                    isSyncingFromRemote = true;
+                    let dataChanged = false;
+                    data.forEach(item => {
+                        const localVal = localStorage.getItem(item.state_key);
+                        const remoteValStr = JSON.stringify(item.state_value);
+                        if (localVal !== remoteValStr) {
+                            localStorage.setItem(item.state_key, remoteValStr);
+                            dataChanged = true;
+                        }
+                    });
+                    if (dataChanged) {
+                        loadSavedData();
+                    }
+                    isSyncingFromRemote = false;
+                }
+            } catch (err) {
+                console.error('Failed to pull remote states:', err.message || err);
+            }
+        }
+
+        // Subscribe to real-time changes
+        function subscribeToRemoteSync() {
+            if (!supabase) return;
+            supabase
+                .channel('public:project_state')
+                .on('postgres_changes', {
+                    event: '*',
+                    schema: 'public',
+                    table: 'project_state',
+                    filter: `sync_scope=eq.${SYNC_SCOPE}`
+                }, (payload) => {
+                    const item = payload.new || payload.old;
+                    if (!item || item.sync_id !== SYNC_ID) return;
+                    
+                    const localVal = localStorage.getItem(item.state_key);
+                    const remoteValStr = JSON.stringify(item.state_value);
+                    
+                    if (localVal !== remoteValStr) {
+                        isSyncingFromRemote = true;
+                        if (payload.eventType === 'DELETE') {
+                            localStorage.removeItem(item.state_key);
+                        } else {
+                            localStorage.setItem(item.state_key, remoteValStr);
+                        }
+                        loadSavedData();
+                        isSyncingFromRemote = false;
+                    }
+                })
+                .subscribe();
+        }
+
         function saveToLocal() {
             const allData = {};
             for (let m = 1; m <= 12; m++) {
@@ -271,15 +376,44 @@
                 allData[m] = monthData;
             }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(allData));
-            // save finalized state
-            localStorage.setItem(STORAGE_KEY + '_finalized', document.body.classList.contains('finalized') ? '1' : '0');
+            const finalizedVal = document.body.classList.contains('finalized') ? '1' : '0';
+            localStorage.setItem(STORAGE_KEY + '_finalized', finalizedVal);
+
+            // Push to Supabase Realtime Sync
+            pushStateToRemote(STORAGE_KEY, allData);
+            pushStateToRemote(STORAGE_KEY + '_finalized', finalizedVal);
         }
 
         function loadSavedData() {
+            // Save active element info to restore focus after rendering
+            const activeEl = document.activeElement;
+            let activeInfo = null;
+            if (activeEl && activeEl.tagName === 'INPUT') {
+                const tr = activeEl.closest('tr');
+                const td = activeEl.closest('td');
+                if (tr && td) {
+                    const tbody = tr.parentNode;
+                    const table = tbody.closest('table');
+                    if (table) {
+                        const trIndex = Array.from(tbody.children).indexOf(tr);
+                        const tdIndex = Array.from(tr.children).indexOf(td);
+                        activeInfo = {
+                            tableId: table.id,
+                            trIndex: trIndex,
+                            tdIndex: tdIndex,
+                            selectionStart: activeEl.selectionStart,
+                            selectionEnd: activeEl.selectionEnd
+                        };
+                    }
+                }
+            }
+
             const saved = localStorage.getItem(STORAGE_KEY);
             const finalizedFlag = localStorage.getItem(STORAGE_KEY + '_finalized');
             if (finalizedFlag === '1') {
                 document.body.classList.add('finalized');
+            } else {
+                document.body.classList.remove('finalized');
             }
             if (saved) {
                 const allData = JSON.parse(saved);
@@ -308,12 +442,14 @@
                 }
             }
             updateTotals();
-        }
 
-            // Apply driver-edit behavior after loading content
-            applyDriverEditModeBasedOnViewport();
-            // If previously finalized, lock driver fields on mobile only
-            const isMobileNow = isMobileUserAgent();
+            // Apply driver-edit styles and behavior after loading/syncing
+            if (typeof applyDriverEditModeBasedOnViewport === 'function') {
+                applyDriverEditModeBasedOnViewport();
+            }
+
+            // Lock driver fields on mobile only if finalized
+            const isMobileNow = typeof isMobileUserAgent === 'function' ? isMobileUserAgent() : (window.innerWidth <= 1024);
             if (document.body.classList.contains('finalized') && isMobileNow) {
                 document.querySelectorAll('.driver-editable').forEach(inp => {
                     inp.disabled = true;
@@ -321,6 +457,26 @@
                     inp.style.background = '#e9ecef';
                 });
             }
+
+            // Restore active element focus and selection range
+            if (activeInfo) {
+                const table = document.getElementById(activeInfo.tableId);
+                if (table) {
+                    const tbody = table.querySelector('.table-body');
+                    const tr = tbody ? tbody.children[activeInfo.trIndex] : null;
+                    const td = tr ? tr.children[activeInfo.tdIndex] : null;
+                    const input = td ? td.querySelector('input') : null;
+                    if (input && !input.disabled) {
+                        input.focus();
+                        try {
+                            if (input.type === 'text') {
+                                input.setSelectionRange(activeInfo.selectionStart, activeInfo.selectionEnd);
+                            }
+                        } catch(e) {}
+                    }
+                }
+            }
+        }
 
         function calcT1(el) {
             const r = el.closest('tr');

@@ -189,15 +189,21 @@
             document.getElementById('monthDisplay').innerText = `مانگی ${currentMonth}`;
             setTimeout(() => {
                 loadSavedData();
+                const hasIncoming = localStorage.getItem('2026_data');
                 checkIncomingData(); 
+                
                 // Pull remote data on load & start listening to updates
-                if (typeof pullAllStatesFromRemote === 'function') {
-                    pullAllStatesFromRemote().then(() => {
-                        if (typeof subscribeToRemoteSync === 'function') {
-                            subscribeToRemoteSync();
-                        }
-                    });
-                }
+                // Delay pulling if there is incoming data to prevent race conditions
+                const pullDelay = hasIncoming ? 2000 : 0;
+                setTimeout(() => {
+                    if (typeof pullAllStatesFromRemote === 'function') {
+                        pullAllStatesFromRemote().then(() => {
+                            if (typeof subscribeToRemoteSync === 'function') {
+                                subscribeToRemoteSync();
+                            }
+                        });
+                    }
+                }, pullDelay);
             }, 100);
 
             setInterval(checkIncomingData, 2000);
@@ -277,7 +283,7 @@
                 renumber(tbody);
                 
                 localStorage.removeItem('2026_data'); 
-                saveToLocal();
+                saveToLocal(true); // Save immediately and push to Supabase synchronously
                 updateTotals();
                 applyDriverEditModeBasedOnViewport();
                 adjustAllInputsWidth(); // Auto-resize text inputs to fit text
@@ -502,7 +508,26 @@
                 .subscribe();
         }
 
-        function saveToLocal() {
+        function pushStateToRemoteImmediate(key, value) {
+            if (!supabaseClient) return;
+            supabaseClient
+                .from('project_state')
+                .upsert({
+                    sync_scope: SYNC_SCOPE,
+                    sync_id: SYNC_ID,
+                    state_key: key,
+                    state_value: value,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'sync_scope,sync_id,state_key'
+                }).then(({error}) => {
+                    if (error) console.error('Supabase immediate push error:', error.message);
+                }).catch(err => {
+                    console.error('Failed to push state immediately:', err);
+                });
+        }
+
+        function saveToLocal(isImmediate) {
             const allData = {};
             for (let m = 1; m <= 12; m++) {
                 const table = document.getElementById(`table-m-${m}`);
@@ -524,8 +549,14 @@
             localStorage.setItem(STORAGE_KEY + '_finalized', finalizedVal);
 
             // Push to Supabase Realtime Sync
-            pushStateToRemote(STORAGE_KEY, allData);
-            pushStateToRemote(STORAGE_KEY + '_finalized', finalizedVal);
+            if (isImmediate) {
+                if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
+                pushStateToRemoteImmediate(STORAGE_KEY, allData);
+                pushStateToRemoteImmediate(STORAGE_KEY + '_finalized', finalizedVal);
+            } else {
+                pushStateToRemote(STORAGE_KEY, allData);
+                pushStateToRemote(STORAGE_KEY + '_finalized', finalizedVal);
+            }
         }
 
         function loadSavedData() {

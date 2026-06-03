@@ -388,24 +388,40 @@
             // Save active element info to restore focus after rendering
             const activeEl = document.activeElement;
             let activeInfo = null;
-            if (activeEl && activeEl.tagName === 'INPUT') {
-                const tr = activeEl.closest('tr');
-                const td = activeEl.closest('td');
-                if (tr && td) {
-                    const tbody = tr.parentNode;
-                    const table = tbody.closest('table');
-                    if (table) {
-                        const trIndex = Array.from(tbody.children).indexOf(tr);
-                        const tdIndex = Array.from(tr.children).indexOf(td);
-                        activeInfo = {
-                            tableId: table.id,
-                            trIndex: trIndex,
-                            tdIndex: tdIndex,
-                            selectionStart: activeEl.selectionStart,
-                            selectionEnd: activeEl.selectionEnd
-                        };
+            try {
+                if (activeEl && activeEl.tagName === 'INPUT') {
+                    const tr = activeEl.closest('tr');
+                    const td = activeEl.closest('td');
+                    if (tr && td) {
+                        const tbody = tr.parentNode;
+                        const table = tbody.closest('table');
+                        if (table) {
+                            const trIndex = Array.from(tbody.children).indexOf(tr);
+                            const tdIndex = Array.from(tr.children).indexOf(td);
+                            
+                            let selStart = null;
+                            let selEnd = null;
+                            // Only access selection properties on input types that support them
+                            const textTypes = ['text', 'search', 'url', 'tel', 'password'];
+                            if (textTypes.includes(activeEl.type || 'text')) {
+                                try {
+                                    selStart = activeEl.selectionStart;
+                                    selEnd = activeEl.selectionEnd;
+                                } catch (e) {}
+                            }
+                            
+                            activeInfo = {
+                                tableId: table.id,
+                                trIndex: trIndex,
+                                tdIndex: tdIndex,
+                                selectionStart: selStart,
+                                selectionEnd: selEnd
+                            };
+                        }
                     }
                 }
+            } catch (err) {
+                console.error("Error capturing active input focus:", err);
             }
 
             const saved = localStorage.getItem(STORAGE_KEY);
@@ -416,29 +432,33 @@
                 document.body.classList.remove('finalized');
             }
             if (saved) {
-                const allData = JSON.parse(saved);
-                for (let m = 1; m <= 12; m++) {
-                    if (!allData[m]) continue;
-                    const table = document.getElementById(`table-m-${m}`);
-                    if(!table) continue;
-                    const tbody = table.querySelector('.table-body');
-                    tbody.innerHTML = ''; 
-                    
-                    allData[m].forEach(rowData => {
-                        createEmptyRow(tbody);
-                        const lastRow = tbody.lastElementChild;
-                        const inputs = lastRow.querySelectorAll('input');
-                        rowData.forEach((val, idx) => {
-                            if (inputs[idx]) {
-                                if (inputs[idx].type === 'checkbox') inputs[idx].checked = val;
-                                else inputs[idx].value = val;
-                            }
+                try {
+                    const allData = JSON.parse(saved);
+                    for (let m = 1; m <= 12; m++) {
+                        if (!allData[m]) continue;
+                        const table = document.getElementById(`table-m-${m}`);
+                        if(!table) continue;
+                        const tbody = table.querySelector('.table-body');
+                        tbody.innerHTML = ''; 
+                        
+                        allData[m].forEach(rowData => {
+                            createEmptyRow(tbody);
+                            const lastRow = tbody.lastElementChild;
+                            const inputs = lastRow.querySelectorAll('input');
+                            rowData.forEach((val, idx) => {
+                                if (inputs[idx]) {
+                                    if (inputs[idx].type === 'checkbox') inputs[idx].checked = val;
+                                    else inputs[idx].value = val;
+                                }
+                            });
+                            const m2 = parseFloat(lastRow.querySelector('.m2-in').value) || 0;
+                            const pr = parseFloat(lastRow.querySelector('.pr-in').value) || 0;
+                            lastRow.querySelector('.tot-in').value = Math.round(m2 * pr);
                         });
-                        const m2 = parseFloat(lastRow.querySelector('.m2-in').value) || 0;
-                        const pr = parseFloat(lastRow.querySelector('.pr-in').value) || 0;
-                        lastRow.querySelector('.tot-in').value = Math.round(m2 * pr);
-                    });
-                    renumber(tbody);
+                        renumber(tbody);
+                    }
+                } catch(err) {
+                    console.error("Error parsing local state data:", err);
                 }
             }
             updateTotals();
@@ -460,20 +480,24 @@
 
             // Restore active element focus and selection range
             if (activeInfo) {
-                const table = document.getElementById(activeInfo.tableId);
-                if (table) {
-                    const tbody = table.querySelector('.table-body');
-                    const tr = tbody ? tbody.children[activeInfo.trIndex] : null;
-                    const td = tr ? tr.children[activeInfo.tdIndex] : null;
-                    const input = td ? td.querySelector('input') : null;
-                    if (input && !input.disabled) {
-                        input.focus();
-                        try {
-                            if (input.type === 'text') {
-                                input.setSelectionRange(activeInfo.selectionStart, activeInfo.selectionEnd);
-                            }
-                        } catch(e) {}
+                try {
+                    const table = document.getElementById(activeInfo.tableId);
+                    if (table) {
+                        const tbody = table.querySelector('.table-body');
+                        const tr = tbody ? tbody.children[activeInfo.trIndex] : null;
+                        const td = tr ? tr.children[activeInfo.tdIndex] : null;
+                        const input = td ? td.querySelector('input') : null;
+                        if (input && !input.disabled) {
+                            input.focus();
+                            try {
+                                if (activeInfo.selectionStart !== null && activeInfo.selectionEnd !== null && input.type === 'text') {
+                                    input.setSelectionRange(activeInfo.selectionStart, activeInfo.selectionEnd);
+                                }
+                            } catch(e) {}
+                        }
                     }
+                } catch(focusErr) {
+                    console.error("Error restoring active input focus:", focusErr);
                 }
             }
         }

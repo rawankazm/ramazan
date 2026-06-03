@@ -264,7 +264,7 @@
         // --- Supabase Realtime Sync Configuration ---
         const SUPABASE_URL = 'https://wpzynhdcepmoeitaskpg.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_BtUxEXUl4-X93L1Cnt4hMA_sZXRcZU-';
-        const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
         const SYNC_SCOPE = 'client';
         const SYNC_ID = 'shared_ramazan_2026';
         let isSyncingFromRemote = false;
@@ -272,11 +272,11 @@
 
         // Function to push a state key to Supabase
         function pushStateToRemote(key, value) {
-            if (!supabase || isSyncingFromRemote) return;
+            if (!supabaseClient || isSyncingFromRemote) return;
             if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
             pushDebounceTimer = setTimeout(async () => {
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('project_state')
                         .upsert({
                             sync_scope: SYNC_SCOPE,
@@ -296,9 +296,9 @@
 
         // Function to pull all states from Supabase on load
         async function pullAllStatesFromRemote() {
-            if (!supabase) return;
+            if (!supabaseClient) return;
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('project_state')
                     .select('state_key, state_value')
                     .eq('sync_scope', SYNC_SCOPE)
@@ -329,8 +329,8 @@
 
         // Subscribe to real-time changes
         function subscribeToRemoteSync() {
-            if (!supabase) return;
-            supabase
+            if (!supabaseClient) return;
+            supabaseClient
                 .channel('public:project_state')
                 .on('postgres_changes', {
                     event: '*',

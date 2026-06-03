@@ -106,6 +106,32 @@ body.force-mobile .search-box, body.is-mobile .search-box { display: block !impo
   th, td { padding: 5px; font-size: 12px; }
 }
 
+/* Style for Date column (4th column) to display nicely and fully on all screens */
+.active-table th:nth-child(4), 
+.active-table td:nth-child(4) {
+  min-width: 105px !important;
+  width: 105px !important;
+  max-width: 105px !important;
+  box-sizing: border-box;
+}
+
+/* Make sure the Date inputs look clean, bold and centered */
+.active-table td:nth-child(4) input {
+  font-family: inherit;
+  font-size: 13px !important;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Ensure disabled and readonly inputs are perfectly readable on iPad and Mobile */
+input:disabled, 
+input[disabled],
+input[readonly] {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  opacity: 1 !important;
+}
+
 /* Keep table layout but enable horizontal scroll; this preserves layout and input fields */
 .table-container { overflow-x: auto; }
 .table-container table { min-width: 900px; }
@@ -113,7 +139,6 @@ body.force-mobile .search-box, body.is-mobile .search-box { display: block !impo
 /* Hide some less-important columns on small screens (adjust if needed) */
 @media (max-width: 760px) {
   /* hide columns by index to simplify mobile view; adjust indices if layout changes */
-  .active-table th:nth-child(4), .active-table td:nth-child(4),
   .active-table th:nth-child(6), .active-table td:nth-child(6),
   .active-table th:nth-child(13), .active-table td:nth-child(13) { display: none; }
 }

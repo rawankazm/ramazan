@@ -235,8 +235,23 @@
             const transferData = localStorage.getItem('2026_data');
             if (transferData) {
                 const data = JSON.parse(transferData);
-                const currentMonth = new Date().getMonth() + 1;
-                const table = document.getElementById(`table-m-${currentMonth}`);
+                
+                // Parse date and month from incoming data
+                let orderMonth = new Date().getMonth() + 1;
+                let dateStr = getDefaultDateString(orderMonth);
+                if (data.date) {
+                    const parts = data.date.split('-');
+                    if (parts.length === 3) {
+                        const year = parts[0];
+                        const month = parts[1];
+                        const day = parts[2];
+                        orderMonth = parseInt(month, 10);
+                        dateStr = `${day}/${month}/${year}`;
+                    }
+                }
+
+                const table = document.getElementById(`table-m-${orderMonth}`);
+                if (!table) return;
                 const tbody = table.querySelector('.table-body');
                 
                 const tr = document.createElement("tr");
@@ -244,7 +259,7 @@
                     <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
                     <td><input type="text" value="${data.company || ''}"></td>
                     <td><input type="text" value="${data.owner || ''}"></td>
-                    <td><input type="text" value="${getDefaultDateString(currentMonth)}" readonly></td>
+                    <td><input type="text" value="${dateStr}" readonly></td>
                     <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                     <td><input type="number" value="${data.q_total || ''}"></td>
                     <td><input type="number" class="m2-in" oninput="calcT1(this)" value="${data.m2_total || ''}"></td>
@@ -265,6 +280,13 @@
                 saveToLocal();
                 updateTotals();
                 applyDriverEditModeBasedOnViewport();
+                adjustAllInputsWidth(); // Auto-resize text inputs to fit text
+
+                // Switch active month tab to show the new imported entry
+                const monthBtn = document.getElementById(`btn-m-${orderMonth}`);
+                if (monthBtn) {
+                    switchMonth(orderMonth, monthBtn);
+                }
             }
         }
 

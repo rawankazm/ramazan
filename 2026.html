@@ -206,7 +206,7 @@
                 <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
                 <td><input type="text" class="tot-in" readonly style="color:red; font-weight:bold;"></td>
                 <td><input type="text"></td>
-                <td style="text-align:center"><input type="checkbox"></td>
+                <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                 <td><input type="text"></td>
                 <td><input type="text"></td>
                 <td><input type="text"></td>
@@ -230,7 +230,7 @@
                     <td><input type="text" value="${data.company || ''}"></td>
                     <td><input type="text" value="${data.owner || ''}"></td>
                     <td><input type="text" value="${new Date().toLocaleDateString('en-GB')}" readonly></td>
-                    <td style="text-align:center"><input type="checkbox"></td>
+                    <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                     <td><input type="number" value="${data.q_total || ''}"></td>
                     <td><input type="number" class="m2-in" oninput="calcT1(this)" value="${data.m2_total || ''}"></td>
                     <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
@@ -249,6 +249,7 @@
                 localStorage.removeItem('2026_data'); 
                 saveToLocal();
                 updateTotals();
+                applyDriverEditModeBasedOnViewport();
             }
         }
 
@@ -312,7 +313,7 @@
             // Apply driver-edit behavior after loading content
             applyDriverEditModeBasedOnViewport();
             // If previously finalized, lock driver fields on mobile only
-            const isMobileNow = window.innerWidth <= 1024;
+            const isMobileNow = isMobileUserAgent();
             if (document.body.classList.contains('finalized') && isMobileNow) {
                 document.querySelectorAll('.driver-editable').forEach(inp => {
                     inp.disabled = true;
@@ -370,7 +371,7 @@
                     <td><input type="text"></td>
                     <td><input type="text"></td>
                     <td><input type="text" value="${new Date().toLocaleDateString('en-GB')}" readonly></td>
-                    <td style="text-align:center"><input type="checkbox"></td>
+                    <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                     <td><input type="number"></td>
                     <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>
                     <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
@@ -384,6 +385,7 @@
                     <td><input type="text" class="driver-editable mobile-edit"></td>`;
                 tbody.insertBefore(tr, tbody.firstChild);
                 renumber(tbody);
+                applyDriverEditModeBasedOnViewport();
             }
             saveToLocal();
         }
@@ -569,10 +571,23 @@
             }
         });
 
+        function isMobileUserAgent() {
+            return window.forceMobile || 
+                   /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                   (navigator.maxTouchPoints > 0 && /Macintosh/.test(navigator.userAgent)) ||
+                   window.matchMedia("(pointer: coarse)").matches ||
+                   window.innerWidth <= 1024;
+        }
+
         // On mobile/iPad allow editing only for inputs with class 'mobile-edit'.
         // On desktop/tablet > 1024px allow editing for all inputs.
         function applyDriverEditModeBasedOnViewport() {
-            const isMobile = window.forceMobile || window.innerWidth <= 1024;
+            const isMobile = isMobileUserAgent();
+            if (isMobile) {
+                document.body.classList.add('is-mobile');
+            } else {
+                document.body.classList.remove('is-mobile');
+            }
             const allInputs = document.querySelectorAll('table input');
             allInputs.forEach(inp => {
                 if (isMobile) {
@@ -586,18 +601,18 @@
                         inp.style.pointerEvents = 'none';
                         inp.style.background = '#f5f5f5';
                     }
+                } else {
+                    // Desktop/Laptop: enable all inputs (except readonly ones remain readonly)
+                    if (inp.hasAttribute('readonly')) {
+                        inp.disabled = true;
+                        inp.style.pointerEvents = 'none';
+                        inp.style.background = 'transparent';
                     } else {
-                        // Desktop/Laptop: enable all inputs (except readonly ones remain readonly)
-                        if (inp.hasAttribute('readonly')) {
-                            inp.disabled = true;
-                            inp.style.pointerEvents = 'none';
-                            inp.style.background = 'transparent';
-                        } else {
-                            inp.disabled = false;
-                            inp.style.pointerEvents = 'auto';
-                            inp.style.background = 'white';
-                        }
+                        inp.disabled = false;
+                        inp.style.pointerEvents = 'auto';
+                        inp.style.background = 'white';
                     }
+                }
             });
         }
 
@@ -605,7 +620,7 @@
         function finalizeUpdates() {
             document.body.classList.add('finalized');
             // If finalize is triggered, only enforce locking on mobile/iPad
-            const isMobile = window.innerWidth <= 1024;
+            const isMobile = isMobileUserAgent();
             if (isMobile) {
                 document.querySelectorAll('.driver-editable').forEach(inp => {
                     inp.disabled = true;

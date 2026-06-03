@@ -52,17 +52,21 @@ body {
   .row-id { width: 40px; }
 }
 
-/* Forced mobile class: apply mobile rules when ?mobile=1 or #mobile is used */
+/* Forced mobile class: apply mobile rules when ?mobile=1, #mobile, or mobile device is detected */
 body.force-mobile .active-table th:nth-child(8),
 body.force-mobile .active-table td:nth-child(8),
 body.force-mobile .active-table th:nth-child(9),
-body.force-mobile .active-table td:nth-child(9) {
+body.force-mobile .active-table td:nth-child(9),
+body.is-mobile .active-table th:nth-child(8),
+body.is-mobile .active-table td:nth-child(8),
+body.is-mobile .active-table th:nth-child(9),
+body.is-mobile .active-table td:nth-child(9) {
   display: none !important;
 }
-body.force-mobile #finalize-btn { display: none !important; }
-body.force-mobile .month-tabs { display: none !important; }
-body.force-mobile .controls > div:first-child { display: none !important; }
-body.force-mobile .search-box { display: block !important; }
+body.force-mobile #finalize-btn, body.is-mobile #finalize-btn { display: none !important; }
+body.force-mobile .month-tabs, body.is-mobile .month-tabs { display: none !important; }
+body.force-mobile .controls > div:first-child, body.is-mobile .controls > div:first-child { display: none !important; }
+body.force-mobile .search-box, body.is-mobile .search-box { display: block !important; }
 
 /* Hide only the price columns ($ سعر and سعر الكل) on mobile/iPad (<=1024px) */
 @media (max-width: 1024px) {

@@ -99,12 +99,14 @@
                 <button class="add-btn" onclick="addNewRow()">➕ <span data-i18n="btn_add">زیادکردنی ڕیز</span></button>
                 <button class="add-btn" style="background:#6c757d;" onclick="history.back()">⬅️ <span data-i18n="btn_back">گەڕانەوە</span></button>
                 <button class="add-btn" style="background:#007bff;" onclick="exportToExcel()">💾 <span data-i18n="btn_export">سەیڤکردن (Excel)</span></button>
+                <button class="add-btn sync-save-btn" style="background:#28a745;" onclick="triggerManualSave()">💾 <span data-i18n="btn_save">سەیڤکردن (مۆبایل و ئایپاد)</span></button>
                 <button class="add-btn driver-btn" onclick="toggleDriverMode()">🚚 <span data-i18n="btn_driver">تایبەت بە سایەق</span></button>
                 <button id="finalize-btn" class="add-btn" style="background:#17a2b8;" onclick="finalizeUpdates()">🔒 <span data-i18n="btn_finalize">نیشاندانی کۆتا</span></button>
             </div>
 
-            <div class="search-area">
-                <div class="search-box">
+            <div class="search-area" style="display: flex; gap: 10px; align-items: center;">
+                <button class="add-btn mobile-save-btn" style="background:#28a745; margin: 0; padding: 10px 15px; font-size: 13px;" onclick="triggerManualSave()">💾 <span data-i18n="btn_save">سەیڤکردن</span></button>
+                <div class="search-box" style="margin: 0;">
                     <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 " data-i18n-placeholder="search_placeholder">
                 </div>
                 <div id="monthDisplay" class="monthDisplay">مانگی ١</div>
@@ -199,6 +201,11 @@
             }, 100);
 
             setInterval(checkIncomingData, 2000);
+            setInterval(() => {
+                if (typeof pullAllStatesFromRemote === 'function') {
+                    pullAllStatesFromRemote();
+                }
+            }, 5000);
         }
 
         function createEmptyRow(tbody) {
@@ -207,7 +214,7 @@
                 <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
                 <td><input type="text"></td>
                 <td><input type="text"></td>
-                <td><input type="text" value="${new Date().toLocaleDateString('en-GB')}" readonly></td>
+                <td><input type="text" value="${getDefaultDateString()}" readonly></td>
                 <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                 <td><input type="number"></td>
                 <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>
@@ -237,7 +244,7 @@
                     <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
                     <td><input type="text" value="${data.company || ''}"></td>
                     <td><input type="text" value="${data.owner || ''}"></td>
-                    <td><input type="text" value="${new Date().toLocaleDateString('en-GB')}" readonly></td>
+                    <td><input type="text" value="${getDefaultDateString()}" readonly></td>
                     <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                     <td><input type="number" value="${data.q_total || ''}"></td>
                     <td><input type="number" class="m2-in" oninput="calcT1(this)" value="${data.m2_total || ''}"></td>
@@ -269,6 +276,59 @@
         const SYNC_ID = 'shared_ramazan_2026';
         let isSyncingFromRemote = false;
         let pushDebounceTimer = null;
+
+        let activeMonthGlobal = new Date().getMonth() + 1;
+
+        function getDefaultDateString() {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(activeMonthGlobal).padStart(2, '0');
+            const year = 2026;
+            return `${day}/${month}/${year}`;
+        }
+
+        async function triggerManualSave() {
+            saveToLocal();
+            if (supabaseClient) {
+                const allData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+                const finalizedVal = localStorage.getItem(STORAGE_KEY + '_finalized');
+                try {
+                    const p1 = supabaseClient.from('project_state').upsert({
+                        sync_scope: SYNC_SCOPE,
+                        sync_id: SYNC_ID,
+                        state_key: STORAGE_KEY,
+                        state_value: allData,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'sync_scope,sync_id,state_key' });
+                    
+                    const p2 = supabaseClient.from('project_state').upsert({
+                        sync_scope: SYNC_SCOPE,
+                        sync_id: SYNC_ID,
+                        state_key: STORAGE_KEY + '_finalized',
+                        state_value: finalizedVal,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'sync_scope,sync_id,state_key' });
+                    
+                    const [r1, r2] = await Promise.all([p1, p2]);
+                    if (r1.error || r2.error) {
+                        throw new Error(r1.error?.message || r2.error?.message);
+                    }
+                    const currentLang = localStorage.getItem('app_lang') || 'ku';
+                    if (currentLang === 'ku') {
+                        alert('سەیڤکردن و هاوسەنگکردنی مۆبایل و ئایپاد سەرکەوتوو بوو!');
+                    } else if (currentLang === 'ar') {
+                        alert('تم الحفظ والمزامنة مع الجوال والآيباد بنجاح!');
+                    } else {
+                        alert('Successfully saved and synced with mobile and iPad!');
+                    }
+                } catch (err) {
+                    console.error('Manual save failed:', err);
+                    alert('هەڵەیەک ڕوویدا لە کاتی سەیڤکردن لەسەر داتابەیس، بەڵام بە لۆکاڵی سەیڤ کراوە.');
+                }
+            } else {
+                alert('بە لۆکاڵی سەیڤ کراوە (Supabase بەردەست نییە).');
+            }
+        }
 
         // Function to push a state key to Supabase
         function pushStateToRemote(key, value) {
@@ -531,6 +591,7 @@
         }
 
         function switchMonth(m, btn) {
+            activeMonthGlobal = m;
             document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             document.querySelectorAll('table').forEach(t => t.classList.remove('active-table'));
@@ -550,7 +611,7 @@
                     <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
                     <td><input type="text"></td>
                     <td><input type="text"></td>
-                    <td><input type="text" value="${new Date().toLocaleDateString('en-GB')}" readonly></td>
+                    <td><input type="text" value="${getDefaultDateString()}" readonly></td>
                     <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                     <td><input type="number"></td>
                     <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>

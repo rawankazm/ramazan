@@ -64,7 +64,6 @@ body.is-mobile .active-table td:nth-child(9) {
   display: none !important;
 }
 body.force-mobile #finalize-btn, body.is-mobile #finalize-btn { display: none !important; }
-body.force-mobile .month-tabs, body.is-mobile .month-tabs { display: none !important; }
 body.force-mobile .controls > div:first-child, body.is-mobile .controls > div:first-child { display: none !important; }
 body.force-mobile .search-box, body.is-mobile .search-box { display: block !important; }
 
@@ -76,11 +75,39 @@ body.force-mobile .search-box, body.is-mobile .search-box { display: block !impo
   }
   /* hide finalize button on mobile/ipad per user request (option B) */
   #finalize-btn { display: none !important; }
-  /* hide month tabs, but keep search visible: hide button group and show search-box */
-  .month-tabs { display: none !important; }
   .controls { display: flex !important; }
   .controls > div:first-child { display: none !important; } /* hide the left button group */
   .search-box { display: block !important; }
+
+  /* Custom display and scroll for month tabs on mobile/iPad viewports */
+  .month-tabs {
+    display: flex !important; /* Force show on mobile */
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding: 8px !important;
+  }
+  .month-btn {
+    flex: 0 0 auto !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+}
+
+/* Save buttons responsive visibility */
+@media (min-width: 1025px) {
+  .mobile-save-btn {
+    display: none !important;
+  }
+}
+@media (max-width: 1024px) {
+  .sync-save-btn {
+    display: none !important;
+  }
+  .mobile-save-btn {
+    display: inline-block !important;
+  }
 }
 
 /* Driver columns and controls remain visible on mobile/ipad — no hiding here */

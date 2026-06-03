@@ -546,6 +546,20 @@ with check (
     )
 );
 
+-- Allow anonymous read and write access to project_state for cross-device sharing
+drop policy if exists "state anon read" on public.project_state;
+create policy "state anon read"
+on public.project_state
+for select
+using (true);
+
+drop policy if exists "state anon write" on public.project_state;
+create policy "state anon write"
+on public.project_state
+for all
+using (true)
+with check (true);
+
 drop policy if exists "conflicts read own" on public.sync_conflicts;
 create policy "conflicts read own"
 on public.sync_conflicts

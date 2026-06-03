@@ -183,7 +183,7 @@
                     </tfoot>`;
                 wrap.appendChild(table);
                 const tbody = table.querySelector('.table-body');
-                for(let i=0; i<15; i++) { createEmptyRow(tbody); }
+                for(let i=0; i<15; i++) { createEmptyRow(tbody, m); }
             }
             
             document.getElementById('monthDisplay').innerText = `مانگی ${currentMonth}`;
@@ -208,13 +208,13 @@
             }, 5000);
         }
 
-        function createEmptyRow(tbody) {
+        function createEmptyRow(tbody, m) {
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
                 <td><input type="text"></td>
                 <td><input type="text"></td>
-                <td><input type="text" value="${getDefaultDateString()}" readonly></td>
+                <td><input type="text" value="${getDefaultDateString(m)}" readonly></td>
                 <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                 <td><input type="number"></td>
                 <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>
@@ -244,7 +244,7 @@
                     <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
                     <td><input type="text" value="${data.company || ''}"></td>
                     <td><input type="text" value="${data.owner || ''}"></td>
-                    <td><input type="text" value="${getDefaultDateString()}" readonly></td>
+                    <td><input type="text" value="${getDefaultDateString(currentMonth)}" readonly></td>
                     <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                     <td><input type="number" value="${data.q_total || ''}"></td>
                     <td><input type="number" class="m2-in" oninput="calcT1(this)" value="${data.m2_total || ''}"></td>
@@ -279,10 +279,11 @@
 
         let activeMonthGlobal = new Date().getMonth() + 1;
 
-        function getDefaultDateString() {
+        function getDefaultDateString(m) {
             const today = new Date();
             const day = String(today.getDate()).padStart(2, '0');
-            const month = String(activeMonthGlobal).padStart(2, '0');
+            const targetMonth = m !== undefined ? m : activeMonthGlobal;
+            const month = String(targetMonth).padStart(2, '0');
             const year = 2026;
             return `${day}/${month}/${year}`;
         }
@@ -502,7 +503,7 @@
                         tbody.innerHTML = ''; 
                         
                         allData[m].forEach(rowData => {
-                            createEmptyRow(tbody);
+                            createEmptyRow(tbody, m);
                             const lastRow = tbody.lastElementChild;
                             const inputs = lastRow.querySelectorAll('input');
                             rowData.forEach((val, idx) => {
@@ -611,7 +612,7 @@
                     <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
                     <td><input type="text"></td>
                     <td><input type="text"></td>
-                    <td><input type="text" value="${getDefaultDateString()}" readonly></td>
+                    <td><input type="text" value="${getDefaultDateString(activeMonthGlobal)}" readonly></td>
                     <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
                     <td><input type="number"></td>
                     <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>

@@ -161,7 +161,36 @@ input[readonly] {
 
 /* Keep table layout but enable horizontal scroll; this preserves layout and input fields */
 .table-container { overflow-x: auto; }
-.table-container table { min-width: 900px; }
+.table-container table { min-width: 1400px; }
+
+/* Center and pad the footer row values to prevent overlap and text squeeze */
+.footer-row td {
+  padding: 10px 15px !important;
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Ensure quantity, m2, price, and total price columns have sufficient width to prevent clipping */
+table th:nth-child(6), 
+table td:nth-child(6) {
+  min-width: 80px !important;
+  width: 80px !important;
+}
+table th:nth-child(7), 
+table td:nth-child(7) {
+  min-width: 130px !important;
+  width: 130px !important;
+}
+table th:nth-child(8), 
+table td:nth-child(8) {
+  min-width: 90px !important;
+  width: 90px !important;
+}
+table th:nth-child(9), 
+table td:nth-child(9) {
+  min-width: 130px !important;
+  width: 130px !important;
+}
 
 /* Hide some less-important columns on small screens (adjust if needed) */
 @media (max-width: 760px) {

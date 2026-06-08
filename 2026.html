@@ -85,6 +85,12 @@
 <body onmouseup="stopSelecting()">
 
     <div id="table1-page" class="page">
+        <!-- Print Header -->
+        <div class="print-header">
+            <h2 data-i18n="print_title">سیستەمی سەرەکی - ٢٠٢٦</h2>
+            <h3 id="print-month"></h3>
+        </div>
+
         <div class="month-tabs">
             <div id="tabs-container" style="display: flex; gap: 5px; flex-wrap: nowrap;"></div>
             <button class="pdf-btn-nav" onclick="generatePDF()">📄 <span data-i18n="btn_pdf">کردن بە PDF</span></button>
@@ -136,6 +142,7 @@
     <script>
         let isSelecting = false;
         const STORAGE_KEY = 'ds_management_2026_permanent';
+        let lastLocalChangeTime = 0;
 
         function toggleDriverMode() {
             document.body.classList.toggle('driver-view');
@@ -191,7 +198,10 @@
                 for(let i=0; i<15; i++) { createEmptyRow(tbody, m); }
             }
             
-            document.getElementById('monthDisplay').innerText = `مانگی ${currentMonth}`;
+            const initialMonthText = `مانگی ${currentMonth}`;
+            document.getElementById('monthDisplay').innerText = initialMonthText;
+            const pm = document.getElementById('print-month');
+            if (pm) pm.innerText = initialMonthText;
             setTimeout(() => {
                 loadSavedData();
                 const hasIncoming = localStorage.getItem('2026_data');
@@ -452,6 +462,15 @@
         // Function to pull all states from Supabase on load
         async function pullAllStatesFromRemote() {
             if (!supabaseClient) return;
+            
+            // Do not pull and overwrite if user is editing or has recently edited
+            const isEditing = document.activeElement && 
+                               document.activeElement.tagName === 'INPUT' && 
+                               document.activeElement.closest('table');
+            if (isEditing || (Date.now() - lastLocalChangeTime < 15000)) {
+                return;
+            }
+
             try {
                 const { data, error } = await supabaseClient
                     .from('project_state')
@@ -500,6 +519,14 @@
                     const remoteValStr = JSON.stringify(item.state_value);
                     
                     if (localVal !== remoteValStr) {
+                        // Do not overwrite local storage if user is editing or has recently edited
+                        const isEditing = document.activeElement && 
+                                           document.activeElement.tagName === 'INPUT' && 
+                                           document.activeElement.closest('table');
+                        if (isEditing || (Date.now() - lastLocalChangeTime < 15000)) {
+                            return;
+                        }
+
                         isSyncingFromRemote = true;
                         if (payload.eventType === 'DELETE') {
                             localStorage.removeItem(item.state_key);
@@ -533,6 +560,8 @@
         }
 
         function saveToLocal(isImmediate) {
+            // Update last local change time to prevent remote pulls from overwriting active edits
+            lastLocalChangeTime = Date.now();
             const allData = {};
             for (let m = 1; m <= 12; m++) {
                 const table = document.getElementById(`table-m-${m}`);
@@ -737,7 +766,10 @@
             const targetTable = document.getElementById(`table-m-${m}`);
             if(targetTable) {
                 targetTable.classList.add('active-table');
-                document.getElementById('monthDisplay').innerText = `مانگی ${m}`;
+                const monthText = `مانگی ${m}`;
+                document.getElementById('monthDisplay').innerText = monthText;
+                const pm = document.getElementById('print-month');
+                if (pm) pm.innerText = monthText;
                 updateTotals();
             }
         }
@@ -792,17 +824,46 @@
             updateTotals();
         }
 
-        function generatePDF() {
-            const element = document.querySelector('.active-table');
+        async function generatePDF() {
+            // Add class to body to apply PDF styling
+            document.body.classList.add('is-generating-pdf');
+            
+            // Hide empty rows before generating PDF
+            const hiddenRows = [];
+            document.querySelectorAll('.active-table .table-body tr').forEach(row => {
+                const companyInput = row.cells[1]?.querySelector('input');
+                const ownerInput = row.cells[2]?.querySelector('input');
+                const companyVal = companyInput ? companyInput.value.trim() : '';
+                const ownerVal = ownerInput ? ownerInput.value.trim() : '';
+                if (companyVal === '' && ownerVal === '') {
+                    row.style.display = 'none';
+                    hiddenRows.push(row);
+                }
+            });
+
+            // Set the print-month text
             const monthName = document.getElementById('monthDisplay').innerText;
+            const pm = document.getElementById('print-month');
+            if (pm) pm.innerText = monthName;
+
+            const element = document.getElementById('table1-page');
             const opt = {
                 margin: 0.2,
                 filename: `Main_System_2026_${monthName}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
+                html2canvas: { scale: 2, useCORS: true },
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
             };
-            html2pdf().set(opt).from(element).save();
+
+            try {
+                await html2pdf().set(opt).from(element).save();
+            } catch (err) {
+                console.error("Error generating PDF:", err);
+            } finally {
+                // Restore hidden rows and body class
+                hiddenRows.forEach(row => row.style.display = '');
+                document.body.classList.remove('is-generating-pdf');
+            }
         }
 
         function exportToExcel() {
@@ -891,17 +952,17 @@
             ku: {
                 btn_pdf: 'دابەزاندن بە PDF', btn_archive: 'ئەڕشیڤی ساڵانە', btn_add: 'زیادکردنی ڕیز', btn_back: 'گەڕانەوە', btn_export: 'ڕاکێشان (Excel)', btn_driver: 'تەنها بۆ سایەق', btn_finalize: 'تەواوکردن',
                 search_placeholder: '🔍 گەڕان...', th_index:'#', th_company:'ناوی کۆمپانیا', th_owner:'خاوەنی داواکاری', th_date:'بەروار', th_ready:'ئامادە', th_count:'ژمارە', th_m2:'کۆی مەتر مربع', th_price_usd:'$ نرخ', th_price_total:'نرخی تەواو', th_glass:'شیشە', th_order_g:'داواکاری', th_color:'ڕەنگ', th_system:'سیستەم', th_glass_received:'وەرگرتنی شیشە', th_transport:'ناردن', th_driver:'ناوی سائق',
-                archive_title:'ئەڕشیڤی ساڵانە', archive_2026:'ساڵی 2026 (چالاک)', archive_close:'داخستن', context_delete:'سڕینەوەی ڕیزەکان', finalize_alert:'نوێکاریی تەواو کرا — پەڕەی مۆبایل دەگۆڕێت', month_label:'مانگ'
+                archive_title:'ئەڕشیڤی ساڵانە', archive_2026:'ساڵی 2026 (چالاک)', archive_close:'داخستن', context_delete:'سڕینەوەی ڕیزەکان', finalize_alert:'نوێکاریی تەواو کرا — پەڕەی مۆبایل دەگۆڕێت', month_label:'مانگ', print_title: 'سیستەمی سەرەکی - ٢٠٢٦'
             },
             ar: {
                 btn_pdf: 'حفظ PDF', btn_archive: 'الأرشيف السنوي', btn_add: 'إضافة صف', btn_back: 'رجوع', btn_export: 'حفظ (Excel)', btn_driver: 'خاص بالسائق', btn_finalize: 'إنهاء',
                 search_placeholder: '🔍 بحث...', th_index:'#', th_company:'اسم الشركة', th_owner:'صاحب الطلبية', th_date:'التاريخ', th_ready:'جاهز', th_count:'العدد', th_m2:'مجموع متر مربع', th_price_usd:'$ سعر', th_price_total:'السعر الكلي', th_glass:'جام', th_order_g:'طلب ج', th_color:'اللون', th_system:'النظام', th_glass_received:'استلام جام', th_transport:'النقل', th_driver:'اسم السائق',
-                archive_title:'الأرشيف السنوي', archive_2026:'سنة 2026 (نشط)', archive_close:'إغلاق', context_delete:'حذف الصفوف', finalize_alert:'تم التحديث النهائي — سيتغير العرض على الجوال', month_label:'شهر'
+                archive_title:'الأرشيف السنوي', archive_2026:'سنة 2026 (نشط)', archive_close:'إغلاق', context_delete:'حذف الصفوف', finalize_alert:'تم التحديث النهائي — سيتغير العرض على الجوال', month_label:'شهر', print_title: 'النظام الرئيسي - ٢٠٢٦'
             },
             en: {
                 btn_pdf: 'Save PDF', btn_archive: 'Yearly Archive', btn_add: 'Add Row', btn_back: 'Back', btn_export: 'Save (Excel)', btn_driver: 'Driver Only', btn_finalize: 'Finalize',
                 search_placeholder: '🔍 Search...', th_index:'#', th_company:'Company Name', th_owner:'Order Owner', th_date:'Date', th_ready:'Ready', th_count:'Count', th_m2:'Total m²', th_price_usd:'$ Price', th_price_total:'Total Price', th_glass:'Glass', th_order_g:'Order G', th_color:'Color', th_system:'System', th_glass_received:'Glass Received', th_transport:'Transport', th_driver:'Driver Name',
-                archive_title:'Yearly Archive', archive_2026:'Year 2026 (active)', archive_close:'Close', context_delete:'Delete rows', finalize_alert:'Final update applied — mobile view will change', month_label:'Month'
+                archive_title:'Yearly Archive', archive_2026:'Year 2026 (active)', archive_close:'Close', context_delete:'Delete rows', finalize_alert:'Final update applied — mobile view will change', month_label:'Month', print_title: 'Main System - 2026'
             }
         };
 
@@ -928,7 +989,12 @@
                 b.innerText = `${i18n[lang].month_label} ${m}`;
             });
             const activeMonth = document.querySelector('.month-btn.active');
-            if (activeMonth) document.getElementById('monthDisplay').innerText = `${i18n[lang].month_label} ${activeMonth.id.replace('btn-m-','')}`;
+            if (activeMonth) {
+                const monthText = `${i18n[lang].month_label} ${activeMonth.id.replace('btn-m-','')}`;
+                document.getElementById('monthDisplay').innerText = monthText;
+                const pm = document.getElementById('print-month');
+                if (pm) pm.innerText = monthText;
+            }
             // update context menu span
             const ctx = document.querySelector('#context-menu [data-i18n]');
             if (ctx && i18n[lang]['context_delete']) ctx.innerText = i18n[lang]['context_delete'];
@@ -1016,6 +1082,33 @@
             saveToLocal();
             alert('کۆتا ئاپدێت هاتووە — بۆ بینینی بەشی نوێ لە مۆبایل دەگۆڕێت');
         }
+
+        // Browser Print Event Listeners to force single page fitting and hide empty rows
+        window.addEventListener('beforeprint', () => {
+            // Hide empty rows before browser printing
+            document.querySelectorAll('.active-table .table-body tr').forEach(row => {
+                const companyInput = row.cells[1]?.querySelector('input');
+                const ownerInput = row.cells[2]?.querySelector('input');
+                const companyVal = companyInput ? companyInput.value.trim() : '';
+                const ownerVal = ownerInput ? ownerInput.value.trim() : '';
+                if (companyVal === '' && ownerVal === '') {
+                    row.setAttribute('data-was-hidden-print', 'true');
+                    row.style.display = 'none';
+                }
+            });
+            // Update the print-month header
+            const monthName = document.getElementById('monthDisplay').innerText;
+            const pm = document.getElementById('print-month');
+            if (pm) pm.innerText = monthName;
+        });
+
+        window.addEventListener('afterprint', () => {
+            // Restore hidden rows after browser printing
+            document.querySelectorAll('.active-table .table-body tr[data-was-hidden-print="true"]').forEach(row => {
+                row.removeAttribute('data-was-hidden-print');
+                row.style.display = '';
+            });
+        });
     </script>
     <!-- Supabase integration removed (reverted) -->
 </body>

@@ -198,3 +198,196 @@ table td:nth-child(9) {
   .active-table th:nth-child(6), .active-table td:nth-child(6),
   .active-table th:nth-child(13), .active-table td:nth-child(13) { display: none; }
 }
+
+/* Print and PDF styling for a single-page landscape layout */
+.print-header {
+  display: none;
+  text-align: center;
+  margin-bottom: 15px;
+  direction: rtl;
+}
+.print-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+.print-header h3 {
+  margin: 5px 0 0 0;
+  font-size: 16px;
+  color: #666;
+}
+
+body.is-generating-pdf .print-header {
+  display: block !important;
+}
+
+body.is-generating-pdf .month-tabs,
+body.is-generating-pdf .controls,
+body.is-generating-pdf #context-menu,
+body.is-generating-pdf #archiveModal {
+  display: none !important;
+}
+
+body.is-generating-pdf {
+  background: white !important;
+  color: black !important;
+  width: 100% !important;
+}
+
+body.is-generating-pdf .page {
+  padding: 10px !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+body.is-generating-pdf .table-container {
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+body.is-generating-pdf .table-container table,
+body.is-generating-pdf table.active-table {
+  display: table !important;
+  width: 100% !important;
+  min-width: unset !important;
+  table-layout: auto !important;
+}
+
+/* Force show all columns and remove fixed min-widths in PDF */
+body.is-generating-pdf th,
+body.is-generating-pdf td,
+body.is-generating-pdf table th:nth-child(n),
+body.is-generating-pdf table td:nth-child(n),
+body.is-generating-pdf .active-table th:nth-child(n),
+body.is-generating-pdf .active-table td:nth-child(n) {
+  display: table-cell !important;
+  visibility: visible !important;
+  font-size: 8px !important;
+  padding: 3px 1px !important;
+  min-width: unset !important;
+  width: auto !important;
+  max-width: unset !important;
+}
+
+body.is-generating-pdf table th:nth-child(4), 
+body.is-generating-pdf table td:nth-child(4) {
+  min-width: 65px !important;
+}
+
+body.is-generating-pdf table th:nth-child(5), body.is-generating-pdf table td:nth-child(5),
+body.is-generating-pdf table th:nth-child(11), body.is-generating-pdf table td:nth-child(11),
+body.is-generating-pdf table th:nth-child(15), body.is-generating-pdf table td:nth-child(15) {
+  width: 25px !important;
+  min-width: 25px !important;
+}
+
+body.is-generating-pdf td input {
+  font-size: 8px !important;
+  height: auto !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+@media print {
+  .print-header {
+    display: block !important;
+  }
+
+  .month-tabs,
+  .controls,
+  #context-menu,
+  #archiveModal,
+  .add-btn,
+  .pdf-btn-nav,
+  .archive-btn-nav,
+  #lang-selector,
+  .search-area,
+  #mobile-link {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    width: 100% !important;
+  }
+
+  .page {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .table-container {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  .table-container table,
+  table.active-table {
+    display: table !important;
+    width: 100% !important;
+    min-width: unset !important;
+    table-layout: auto !important;
+  }
+
+  /* Force show all columns and remove fixed min-widths in Print preview */
+  th, td,
+  table th:nth-child(n),
+  table td:nth-child(n),
+  .active-table th:nth-child(n),
+  .active-table td:nth-child(n) {
+    display: table-cell !important;
+    visibility: visible !important;
+    font-size: 8px !important;
+    padding: 3px 1px !important;
+    min-width: unset !important;
+    width: auto !important;
+    max-width: unset !important;
+    border: 1px solid #000 !important;
+  }
+
+  /* Date column print width */
+  table th:nth-child(4), table td:nth-child(4) {
+    min-width: 65px !important;
+  }
+
+  /* Checkbox columns: make them very small */
+  table th:nth-child(5), table td:nth-child(5),
+  table th:nth-child(11), table td:nth-child(11),
+  table th:nth-child(15), table td:nth-child(15) {
+    width: 25px !important;
+    min-width: 25px !important;
+    text-align: center !important;
+  }
+
+  input[type="text"], input[type="number"] {
+    border: none !important;
+    background: transparent !important;
+    font-size: 8px !important;
+    text-align: center !important;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  input[type="checkbox"] {
+    transform: scale(0.8) !important;
+    margin: 0 !important;
+  }
+
+  @page {
+    size: A4 landscape;
+    margin: 0.2in;
+  }
+}

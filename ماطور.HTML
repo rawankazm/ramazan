@@ -625,28 +625,7 @@
         }
     });
 
-                function hideMenu() { if(document.getElementById('excel-menu')) document.getElementById('excel-menu').style.display = 'none'; });
-
-    // Hide empty rows before printing to fit on a single page
-    window.addEventListener('beforeprint', () => {
-        document.querySelectorAll('#table-body tr').forEach(row => {
-            const wInput = row.querySelector('.w-in');
-            const hInput = row.querySelector('.h-in');
-            const wVal = wInput ? wInput.value.trim() : '';
-            const hVal = hInput ? hInput.value.trim() : '';
-            if (wVal === '' && hVal === '') {
-                row.setAttribute('data-was-hidden-print', 'true');
-                row.style.display = 'none';
-            }
-        });
-    });
-
-    window.addEventListener('afterprint', () => {
-        document.querySelectorAll('#table-body tr[data-was-hidden-print="true"]').forEach(row => {
-            row.removeAttribute('data-was-hidden-print');
-            row.style.display = '';
-        });
-    });
+                    function hideMenu() { if(document.getElementById('excel-menu')) document.getElementById('excel-menu').style.display = 'none'; });
 </script>
 </body>
 </html>

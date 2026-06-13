@@ -47,7 +47,7 @@
         .bg-grey-input { background-color: rgba(200, 200, 200, 0.3) !important; }
         .row-num { background-color: #ccc !important; font-weight: bold; font-size: 12px; }
         .footer-total { border: 1.5px solid #000; font-size: 24px !important; font-weight: 900; height: 35px; }
-                        @media print { 
+                                @media print { 
             .controls-container, #excel-menu { display: none !important; } 
             @page { size: A4 landscape; margin: 5mm; } 
             * { -webkit-print-color-adjust: exact !important; } 
@@ -61,15 +61,17 @@
             .page-frame {
                 padding: 0 !important;
                 margin: 0 !important;
+                page-break-inside: avoid !important;
+                height: auto !important;
             }
 
             .top-header-wrapper {
-                height: 160px !important;
+                height: 150px !important;
                 margin-bottom: 5px !important;
             }
 
             .header-left-side {
-                height: 150px !important;
+                height: 140px !important;
                 width: 280px !important;
                 left: 10px !important;
             }
@@ -88,12 +90,12 @@
             }
 
             .info-table td {
-                height: 20px !important;
+                height: 19px !important;
             }
 
             .label-cell {
                 width: 65px !important;
-                font-size: 9px !important;
+                font-size: 10px !important;
             }
 
             .right-side-table {
@@ -102,52 +104,58 @@
             }
 
             .right-side-table td {
-                height: 20px !important;
-                font-size: 9px !important;
+                height: 19px !important;
+                font-size: 10px !important;
             }
 
             .right-side-table td[colspan="2"] {
-                height: 20px !important;
+                height: 19px !important;
             }
 
             .not-cell {
                 font-size: 12px !important;
-                height: 20px !important;
+                height: 19px !important;
             }
 
             input {
-                font-size: 11px !important;
+                font-size: 12px !important;
+                font-weight: bold !important;
             }
 
             .system-input {
-                font-size: 11px !important;
+                font-size: 12px !important;
+                font-weight: bold !important;
             }
 
             .spacer-part, .band-part {
-                font-size: 9px !important;
-                line-height: 20px !important;
+                font-size: 10px !important;
+                line-height: 19px !important;
             }
 
             th {
-                font-size: 9px !important;
+                font-size: 11px !important;
                 padding: 1px !important;
+                font-weight: bold !important;
             }
 
             td {
-                height: 20px !important;
+                height: 22px !important;
             }
 
             .data-table td input {
-                font-size: 10px !important;
+                font-size: 12px !important;
+                font-weight: bold !important;
             }
 
             .footer-total {
-                font-size: 16px !important;
-                height: 24px !important;
+                font-size: 18px !important;
+                height: 26px !important;
+                font-weight: bold !important;
             }
 
             .row-num {
-                font-size: 10px !important;
+                font-size: 11px !important;
+                font-weight: bold !important;
             }
         } 
             @page { size: A4 landscape; margin: 5mm; } 

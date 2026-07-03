@@ -241,8 +241,9 @@ before update on public.sync_conflicts
 for each row execute function public.set_updated_at();
 
 alter table public.profiles enable row level security;
-alter table public.teams enable row level security;
-alter table public.team_members enable row level security;
+-- Disable RLS on teams and team_members to prevent circular recursion issues
+alter table public.teams disable row level security;
+alter table public.team_members disable row level security;
 alter table public.devices enable row level security;
 alter table public.project_systems enable row level security;
 alter table public.project_orders enable row level security;

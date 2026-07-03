@@ -309,9 +309,10 @@ using (
     or user_id = auth.uid()
     or exists (
         select 1
-        from public.teams t
-        where t.id = team_members.team_id
-            and t.owner_id = auth.uid()
+        from public.team_members self
+        where self.team_id = team_members.team_id
+            and self.user_id = auth.uid()
+            and self.is_active = true
     )
 );
 

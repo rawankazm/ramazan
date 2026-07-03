@@ -306,14 +306,16 @@ on public.team_members
 for select
 using (
     auth.role() = 'service_role'
-    or user_id = auth.uid()
-    or exists (
-        select 1
-        from public.team_members self
-        where self.team_id = team_members.team_id
-            and self.user_id = auth.uid()
-            and self.is_active = true
-    )
+    or (auth.uid() is not null and (
+        user_id = auth.uid()
+        or exists (
+            select 1
+            from public.team_members self
+            where self.team_id = team_members.team_id
+                and self.user_id = auth.uid()
+                and self.is_active = true
+        )
+    ))
 );
 
 drop policy if exists "team members owner write" on public.team_members;

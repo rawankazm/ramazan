@@ -726,6 +726,7 @@
             }
             updateEmptyRowDates();
             adjustAllInputsWidth();
+            filterTable();
         }
 
         function calcT1(el) {
@@ -771,6 +772,7 @@
                 const pm = document.getElementById('print-month');
                 if (pm) pm.innerText = monthText;
                 updateTotals();
+                filterTable();
             }
         }
 

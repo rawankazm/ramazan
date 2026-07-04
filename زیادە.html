@@ -292,6 +292,7 @@
                 }
             }
             updateTotals();
+            filterTable();
         }
 
         function calcT1(el) {
@@ -331,6 +332,7 @@
                 targetTable.classList.add('active-table');
                 document.getElementById('monthDisplay').innerText = `مانگی ${m}`;
                 updateTotals();
+                filterTable();
             }
         }
 

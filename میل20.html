@@ -11,10 +11,13 @@
         .action-btn { padding: 10px 25px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         
         /* مێنۆی کلیکی ڕاست */
-        #excel-menu { position: fixed; display: none; background: #fff; border: 1px solid #ababab; box-shadow: 3px 3px 10px rgba(0,0,0,0.2); z-index: 10000; padding: 5px; width: 180px; border-radius: 4px; font-size: 14px; }
+        #excel-menu { position: fixed; display: none; background: #fff; border: 1px solid #ababab; box-shadow: 3px 3px 10px rgba(0,0,0,0.2); z-index: 10000; padding: 5px; width: 220px; max-height: calc(100vh - 16px); overflow-y: auto; border-radius: 4px; font-size: 14px; }
         .menu-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; text-align: right; display: flex; justify-content: space-between; align-items: center; }
         .menu-item:hover { background-color: #f0f0f0; }
         .menu-item input[type="color"] { width: 25px; height: 25px; border: none; cursor: pointer; background: none; }
+        .menu-section { display: flex; gap: 4px; padding: 6px; border-bottom: 1px solid #eee; }
+        .menu-action { flex: 1; padding: 6px 4px; border: 1px solid #ccc; background: #fafafa; cursor: pointer; border-radius: 3px; font-weight: bold; }
+        .menu-action:hover { background: #e8f0fe; }
  
         /* ستایلی دیاریکردنی خانەکان */
         .selected-cell { background-color: #bbdefb !important; outline: 2px solid #2196f3 !important; z-index: 5; }
@@ -67,7 +70,7 @@
                                                         @media print { 
             .controls-container, #excel-menu { display: none !important; } 
             @page { size: A4 landscape; margin: 3mm; } 
-            * { -webkit-print-color-adjust: exact !important; } 
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .selected-cell { outline: none !important; background-color: transparent !important; }
  
             html, body {
@@ -195,6 +198,23 @@
 <body onmousedown="startSelecting(event)" onmouseover="continueSelecting(event)" onmouseup="stopSelecting()">
  
 <div id="excel-menu">
+    <div class="menu-section">
+        <button class="menu-action" onclick="copySelected()">کۆپی</button>
+        <button class="menu-action" onclick="cutSelected()">بڕین</button>
+        <button class="menu-action" onclick="pasteSelected()">پەیست</button>
+    </div>
+    <div class="menu-section">
+        <button class="menu-action" onclick="toggleSelectedStyle('fontWeight', 'bold')">B</button>
+        <button class="menu-action" onclick="toggleSelectedStyle('fontStyle', 'italic')">I</button>
+        <button class="menu-action" onclick="setSelectedStyle('textAlign', 'right')">R</button>
+        <button class="menu-action" onclick="setSelectedStyle('textAlign', 'center')">C</button>
+        <button class="menu-action" onclick="setSelectedStyle('textAlign', 'left')">L</button>
+    </div>
+    <div class="menu-section">
+        <button class="menu-action" onclick="setSelectedFontSize('12px')">12</button>
+        <button class="menu-action" onclick="setSelectedFontSize('16px')">16</button>
+        <button class="menu-action" onclick="setSelectedFontSize('20px')">20</button>
+    </div>
     <div class="menu-item">
         <span>ڕەنگی باکگراوند</span>
         <input type="color" onchange="applyToSelected('backgroundColor', this.value)">
@@ -380,6 +400,49 @@
  
     function applyToSelected(prop, val) {
         selectedInputs.forEach(input => input.style[prop] = val);
+        hideMenu();
+    }
+
+    function selectedValues() {
+        return Array.from(selectedInputs).map(input => input.value).join('\t');
+    }
+
+    async function copySelected() {
+        try { await navigator.clipboard.writeText(selectedValues()); } catch (error) { alert('کۆپی کردن لەم browser ـەدا بەردەست نییە'); }
+        hideMenu();
+    }
+
+    async function cutSelected() {
+        try { await navigator.clipboard.writeText(selectedValues()); } catch (error) { alert('بڕین لەم browser ـەدا بەردەست نییە'); return; }
+        clearSelectedContent();
+    }
+
+    async function pasteSelected() {
+        let clipboardText;
+        try { clipboardText = await navigator.clipboard.readText(); } catch (error) { alert('پەیست کردن لەم browser ـەدا بەردەست نییە'); return; }
+        const values = clipboardText.split(/\t|\r?\n/);
+        Array.from(selectedInputs).forEach((input, index) => {
+            if (!input.readOnly && values[index] !== undefined) {
+                input.value = values[index];
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        });
+        hideMenu();
+    }
+
+    function setSelectedStyle(property, value) {
+        selectedInputs.forEach(input => input.style[property] = value);
+        hideMenu();
+    }
+
+    function toggleSelectedStyle(property, value) {
+        const shouldApply = Array.from(selectedInputs).some(input => input.style[property] !== value);
+        selectedInputs.forEach(input => input.style[property] = shouldApply ? value : 'normal');
+        hideMenu();
+    }
+
+    function setSelectedFontSize(size) {
+        selectedInputs.forEach(input => input.style.fontSize = size);
         hideMenu();
     }
  

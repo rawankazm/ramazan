@@ -320,6 +320,7 @@
  
     let isSelecting = false;
     let selectedInputs = new Set();
+    let selectedCells = new Set();
  
     function startSelecting(e) {
         if (e.button !== 0) return; 
@@ -340,12 +341,16 @@
  
     function addToSelection(input) {
         selectedInputs.add(input);
+        selectedCells.add(input.closest('td'));
         input.classList.add('selected-cell');
+        input.closest('td').classList.add('selected-cell');
     }
  
     function clearSelection() {
         selectedInputs.forEach(input => input.classList.remove('selected-cell'));
+        selectedCells.forEach(cell => cell.classList.remove('selected-cell'));
         selectedInputs.clear();
+        selectedCells.clear();
         hideMenu();
     }
  
@@ -388,17 +393,23 @@
  
     const menu = document.getElementById('excel-menu');
     document.addEventListener('contextmenu', function(e) {
-        const input = e.target.closest('td input');
-        if (!input) return;
+        const cell = e.target.closest('td');
+        if (!cell) return;
         e.preventDefault();
         clearSelection();
-        addToSelection(input);
+        const input = cell.querySelector('input');
+        if (input) addToSelection(input);
+        else {
+            selectedCells.add(cell);
+            cell.classList.add('selected-cell');
+        }
         menu.style.display = 'block';
         menu.style.left = Math.min(e.clientX, window.innerWidth - menu.offsetWidth - 8) + 'px';
         menu.style.top = Math.min(e.clientY, window.innerHeight - menu.offsetHeight - 8) + 'px';
     });
  
     function applyToSelected(prop, val) {
+        selectedCells.forEach(cell => cell.style[prop] = val);
         selectedInputs.forEach(input => input.style[prop] = val);
         hideMenu();
     }
@@ -431,17 +442,20 @@
     }
 
     function setSelectedStyle(property, value) {
+        selectedCells.forEach(cell => cell.style[property] = value);
         selectedInputs.forEach(input => input.style[property] = value);
         hideMenu();
     }
 
     function toggleSelectedStyle(property, value) {
         const shouldApply = Array.from(selectedInputs).some(input => input.style[property] !== value);
+        selectedCells.forEach(cell => cell.style[property] = shouldApply ? value : 'normal');
         selectedInputs.forEach(input => input.style[property] = shouldApply ? value : 'normal');
         hideMenu();
     }
 
     function setSelectedFontSize(size) {
+        selectedCells.forEach(cell => cell.style.fontSize = size);
         selectedInputs.forEach(input => input.style.fontSize = size);
         hideMenu();
     }

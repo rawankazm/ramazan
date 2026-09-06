@@ -63,14 +63,6 @@
             border: 1.2px solid #000; border-radius: 50%;
             top: 22px; right: 22px; background: white; z-index: 5;
         }
-        .glass-draw.hole-left .glass-hole { right: auto; left: 22px; }
-        .glass-draw.hole-left .line-red-h { right: auto; left: 0; }
-        .glass-draw.hole-left .text-33-h { right: auto; left: 2px; }
-        .glass-draw.hole-left .line-red-v { right: auto; left: 28px; }
-        .glass-draw.hole-left .text-33-v { right: auto; left: -15px; }
-        .glass-draw.hole-left .blue-arrow-container { right: auto; left: 35px; transform: scaleX(-1); }
-        .hole-toggle { margin-top: 4px; padding: 2px 6px; border: 1px solid #aaa; border-radius: 3px; background: #f5f5f5; cursor: pointer; font-size: 10px; }
-        @media print { .hole-toggle { display: none !important; } }
 
         .line-red-h { position: absolute; top: 28px; right: 0; width: 28px; border-top: 1.5px solid red; }
         .text-33-h { position: absolute; top: -15px; right: 2px; color: red; font-size: 10px; font-weight: bold; }
@@ -210,21 +202,12 @@
                      
                     ` : ''}
                 </div>
-                ${item.h_type ? `<button type="button" class="hole-toggle" onclick="toggleHolePosition(this)">کون: ڕاست</button>` : ''}
                 <input type="text" class="footer-input" placeholder="تێبینی...">
             </div>`;
     }
 
-    function toggleHolePosition(button) {
-        const draw = button.previousElementSibling;
-        const isLeft = draw.classList.toggle('hole-left');
-        button.textContent = isLeft ? 'کون: چەپ' : 'کون: ڕاست';
-    }
-
     async function generateAndSharePDF() {
         const element = document.getElementById('pdf-area');
-        const holeButtons = document.querySelectorAll('.hole-toggle');
-        holeButtons.forEach(button => button.style.display = 'none');
         const customer = localStorage.getItem('jam_customer_name') || "Order";
         const fileName = `Til20_${customer}.pdf`;
 
@@ -246,8 +229,6 @@
             }
         } catch (err) {
             alert("هەڵە ڕوویدا");
-        } finally {
-            holeButtons.forEach(button => button.style.display = '');
         }
     }
 </script>

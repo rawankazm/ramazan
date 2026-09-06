@@ -494,8 +494,9 @@
             if (prop === 'clearContent') {
                 cell.querySelectorAll('input').forEach(input => { input.value = ""; calculate(input); });
             } else {
-                cell.style[prop] = val;
-                cell.querySelectorAll('input').forEach(input => input.style[prop] = val);
+                const cssProperty = prop.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+                cell.style.setProperty(cssProperty, val, 'important');
+                cell.querySelectorAll('input').forEach(input => input.style.setProperty(cssProperty, val, 'important'));
             }
         });
     }

@@ -175,6 +175,11 @@
 </head>
 <body onclick="hideMenu()">
 
+<div id="excel-menu">
+    <div>ڕەنگی باکگراوند</div>
+    <input type="color" onchange="applyCellBackground(this.value)">
+</div>
+
 <div class="page-frame" id="printable-area">
     <div class="top-header-wrapper">
         <div class="header-left-side">
@@ -346,6 +351,25 @@
         };
         localStorage.setItem('2026_data', JSON.stringify(data));
         window.location.href = "2026.html";
+    }
+
+    document.addEventListener('contextmenu', (e) => {
+        const cell = e.target.closest('td');
+        if (!cell) return;
+        e.preventDefault();
+        document.querySelectorAll('.selected-cell').forEach(item => item.classList.remove('selected-cell'));
+        cell.classList.add('selected-cell');
+        const menu = document.getElementById('excel-menu');
+        menu.style.display = 'block';
+        menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+    });
+
+    function applyCellBackground(color) {
+        document.querySelectorAll('.selected-cell').forEach(cell => {
+            cell.style.backgroundColor = color;
+            cell.querySelectorAll('input').forEach(input => input.style.backgroundColor = color);
+        });
+        hideMenu();
     }
 
             function hideMenu() { if(document.getElementById('excel-menu')) document.getElementById('excel-menu').style.display = 'none'; }

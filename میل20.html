@@ -19,7 +19,7 @@
         .selected-cell { background-color: #bbdefb !important; outline: 2px solid #2196f3 !important; z-index: 5; }
 
         .page-frame { padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; }
-        .top-header-wrapper { display: flex; justify-content: center; align-items: flex-start; margin-bottom: 8px; height: 275px; position: relative; }
+        .top-header-wrapper { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; margin-bottom: 8px; height: auto; position: relative; }
         
         .header-left-side { position: absolute; left: 20px; top: 0; display: flex; flex-direction: column; justify-content: space-between; height: 210px; width: 380px; }
         .header-logo-main { width: 210px; height: auto; }
@@ -46,7 +46,7 @@
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input:focus { background-color: #e3f2fd !important; }
 
-        .right-side-table { position: absolute; right: 20px; top: 0; border-collapse: collapse; width: calc(100% - 440px); min-width: 420px; border: 1.5px solid #000; }
+        .right-side-table { position: static; margin-top: 8px; border-collapse: collapse; width: 100%; min-width: 0; border: 1.5px solid #000; }
         .right-side-table td { border: 1.2px solid #000; height: 38px; text-align: center; padding-right: 0; font-weight: bold; font-size: 11px; }
         .right-side-table td:last-child:not([colspan]) { width: 75px; }
         .not-cell { background-color: #eee !important; text-align: center !important; font-size: 16px !important; letter-spacing: 2px; height: 30px !important; }
@@ -82,7 +82,7 @@
             }
 
             .top-header-wrapper {
-                height: 175px !important;
+                height: auto !important;
                 margin-bottom: 5px !important;
             }
 
@@ -115,8 +115,8 @@
             }
 
             .right-side-table {
-                right: 10px !important;
-                width: calc(50% - 130px) !important;
+                right: auto !important;
+                width: 100% !important;
             }
 
             .right-side-table td {

@@ -10,6 +10,10 @@
         .action-btn { padding: 10px 25px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         
         #excel-menu { position: fixed; display: none; background: #fff; border: 1px solid #ababab; box-shadow: 3px 3px 10px rgba(0,0,0,0.2); z-index: 10000; padding: 10px; width: 180px; border-radius: 4px; }
+        .menu-section { border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; }
+        .color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 8px; }
+        .color-opt { width: 25px; height: 25px; border: 1px solid #ddd; cursor: pointer; border-radius: 3px; }
+        .tool-label { font-size: 10px; color: #666; font-weight: bold; margin-bottom: 3px; display: block; }
         .menu-btn { width: 100%; padding: 5px; border: 1px solid #ccc; background: #f9f9f9; cursor: pointer; font-size: 20px; font-weight: bold; margin-top: 3px; border-radius: 3px; }
         
         /* شێوازی خانە دیاریکراوەکان */
@@ -172,10 +176,9 @@
 <body onclick="hideMenu()">
 
 <div id="excel-menu">
-    <label class="menu-btn">ڕەنگی باکگراوند
-        <input type="color" onchange="applyCellBackground(this.value)">
-    </label>
-    <button class="menu-btn" style="color:red; width: 100%;" onclick="clearSelectedContent()">Clear Selection (Delete)</button>
+    <div class="menu-section"><span class="tool-label">Alignment:</span><div style="display:flex; gap:4px;"><button class="menu-btn" onclick="applyExcelStyle('textAlign','left')">L</button><button class="menu-btn" onclick="applyExcelStyle('textAlign','center')">C</button><button class="menu-btn" onclick="applyExcelStyle('textAlign','right')">R</button></div></div>
+    <div class="menu-section"><span class="tool-label">Colors:</span><div class="color-grid"><div class="color-opt" style="background:#ffffff;" onclick="applyExcelStyle('backgroundColor','#ffffff')"></div><div class="color-opt" style="background:#ffeb3b;" onclick="applyExcelStyle('backgroundColor','#ffeb3b')"></div><div class="color-opt" style="background:#4caf50;" onclick="applyExcelStyle('backgroundColor','#4caf50')"></div><div class="color-opt" style="background:#f44336;" onclick="applyExcelStyle('backgroundColor','#f44336')"></div></div></div>
+    <button class="menu-btn" style="color:red; width: 100%;" onclick="applyExcelStyle('clearContent')">Clear Selection</button>
 </div>
 
 <div class="page-frame" id="printable-area">
@@ -380,6 +383,21 @@ function applyCellBackground(color) {
         cell.style.setProperty('background-color', color, 'important');
         cell.querySelectorAll('input').forEach(input => input.style.setProperty('background-color', color, 'important'));
     });
+    hideMenu();
+}
+
+function applyExcelStyle(prop, val) {
+    if (prop === 'clearContent') { clearSelectedContent(); return; }
+    document.querySelectorAll('.selected-cell').forEach(cell => {
+        const cssProperty = prop.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+        cell.style.setProperty(cssProperty, val, 'important');
+        cell.querySelectorAll('input').forEach(input => input.style.setProperty(cssProperty, val, 'important'));
+    });
+    hideMenu();
+}
+
+function clearSelectedContent() {
+    document.querySelectorAll('.selected-cell input').forEach(input => { if (!input.readOnly) { input.value = ''; calculate(input); } });
     hideMenu();
 }
 

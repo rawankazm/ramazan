@@ -29,8 +29,9 @@
         .label-cell { background-color: #eee !important; width: 85px; text-align: right; padding-right: 5px; font-weight: bold; font-size: 11.5px; }
         input { width: 100%; height: 100%; border: none; outline: none; text-align: center; font-weight: bold; background: transparent; box-sizing: border-box; font-size: 15px; }
         
-        .right-side-table { position: absolute; right: 20px; top: 0; border-collapse: collapse; width: 310px; border: 1.5px solid #000; }
+        .right-side-table { position: absolute; right: 20px; top: 0; border-collapse: collapse; width: calc(50% - 195px); min-width: 310px; border: 1.5px solid #000; }
         .right-side-table td { border: 1.2px solid #000; height: 38px; text-align: right; padding-right: 5px; font-weight: bold; font-size: 11px; }
+        .right-side-table td:last-child:not([colspan]) { width: 75px; }
         .not-cell { background-color: #eee !important; text-align: center !important; font-size: 16px !important; letter-spacing: 2px; height: 30px !important; }
         
         .system-input { color: red !important; font-size: 15px !important; }
@@ -96,12 +97,16 @@
 
             .right-side-table {
                 right: 10px !important;
-                width: 220px !important;
+                width: calc(50% - 130px) !important;
             }
 
             .right-side-table td {
                 height: 24px !important;
                 font-size: 9px !important;
+            }
+
+            .right-side-table td:last-child:not([colspan]) {
+                width: 60px !important;
             }
 
             .info-table input, .right-side-table input {

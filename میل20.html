@@ -368,12 +368,14 @@
  
     const menu = document.getElementById('excel-menu');
     document.addEventListener('contextmenu', function(e) {
-        if (selectedInputs.size > 0) {
-            e.preventDefault();
-            menu.style.display = 'block';
-            menu.style.left = e.pageX + 'px';
-            menu.style.top = e.pageY + 'px';
-        }
+        const input = e.target.closest('td input');
+        if (!input) return;
+        e.preventDefault();
+        clearSelection();
+        addToSelection(input);
+        menu.style.display = 'block';
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
     });
  
     function applyToSelected(prop, val) {

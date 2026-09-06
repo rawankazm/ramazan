@@ -437,7 +437,8 @@
         cell.classList.add('selected-cell');
         const menu = document.getElementById('excel-menu');
         menu.style.display = 'block';
-        menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px';
+        menu.style.left = Math.min(e.clientX, window.innerWidth - menu.offsetWidth - 8) + 'px';
+        menu.style.top = Math.min(e.clientY, window.innerHeight - menu.offsetHeight - 8) + 'px';
     });
 
                     function hideMenu() { if(document.getElementById('excel-menu')) document.getElementById('excel-menu').style.display = 'none'; }

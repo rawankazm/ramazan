@@ -508,12 +508,10 @@
             const w = row.querySelector('.w-in').value, h = row.querySelector('.h-in').value, q = row.querySelector('.q-in').value || 1;
             if (w > 0 && h > 0) allData.push({ w, h, q, num: index + 1 });
         });
-        if (allData.length > 0) {
-            localStorage.setItem('jam_company_name', company);
-            localStorage.setItem('jam_customer_name', owner);
-            localStorage.setItem('glass_orders_2026', JSON.stringify(allData));
-            window.location.href = "جام المغناطیس16.html";
-        } else alert("تکایە سەرەتا قیاسەکان داخل بکە!");
+        localStorage.setItem('jam_company_name', company);
+        localStorage.setItem('jam_customer_name', owner);
+        localStorage.setItem('glass_orders_2026', JSON.stringify(allData));
+        window.location.href = "جام المغناطیس16.html";
     }
 
     function savePage() {

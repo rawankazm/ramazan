@@ -1,3 +1,6 @@
+
+
+Ds system mil20 · HTML
 <!DOCTYPE html>
 <html lang="ku" dir="ltr">
 <head>
@@ -14,10 +17,10 @@
         .menu-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; text-align: right; display: flex; justify-content: space-between; align-items: center; }
         .menu-item:hover { background-color: #f0f0f0; }
         .menu-item input[type="color"] { width: 25px; height: 25px; border: none; cursor: pointer; background: none; }
-
+ 
         /* ستایلی دیاریکردنی خانەکان */
         .selected-cell { background-color: #bbdefb !important; outline: 2px solid #2196f3 !important; z-index: 5; }
-
+ 
         .page-frame { padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; }
         .top-header-wrapper { display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-start; margin-bottom: 8px; height: 275px; position: relative; }
         
@@ -45,8 +48,8 @@
         }
         input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input:focus { background-color: #e3f2fd !important; }
-
-        .right-side-table { position: absolute; right: 0; top: 38px; border-collapse: collapse; width: 520px; min-width: 520px; height: 266px; border: 1.5px solid #000; }
+ 
+        .right-side-table { position: absolute; right: 0; top: 0; border-collapse: collapse; width: 520px; min-width: 520px; height: 266px; border: 1.5px solid #000; }
         .right-side-table td { border: 1.2px solid #000; height: 38px; text-align: center; padding-right: 0; font-weight: bold; font-size: 11px; }
         .right-side-table td:last-child:not([colspan]) { width: 75px; }
         .not-cell { background-color: #eee !important; text-align: center !important; font-size: 16px !important; letter-spacing: 2px; height: 38px !important; }
@@ -62,136 +65,136 @@
         .bg-grey-input { background-color: rgba(200, 200, 200, 0.3) !important; }
         .row-num { background-color: #ccc !important; font-weight: bold; font-size: 15px; }
         .footer-total { border: 1.5px solid #000; font-size: 24px !important; font-weight: 900; height: 42px; }
-
+ 
                                                         @media print { 
             .controls-container, #excel-menu { display: none !important; } 
             @page { size: A4 landscape; margin: 3mm; } 
             * { -webkit-print-color-adjust: exact !important; } 
             .selected-cell { outline: none !important; background-color: transparent !important; }
-
+ 
             html, body {
                 height: auto !important;
                 background-color: white !important;
             }
-
+ 
             .page-frame {
                 padding: 0 !important;
                 margin: 0 !important;
                 page-break-inside: avoid !important;
                 height: auto !important;
             }
-
+ 
             .top-header-wrapper {
                 height: 175px !important;
                 margin-bottom: 5px !important;
             }
-
+ 
             .header-left-side {
                 height: 165px !important;
                 width: 250px !important;
                 left: 10px !important;
             }
-
+ 
             .header-logo-main {
                 width: 120px !important;
             }
-
+ 
             .contact-info {
                 font-size: 8px !important;
                 line-height: 1.2 !important;
             }
-
+ 
             .info-table {
                 width: 220px !important;
             }
-
+ 
             .info-table td {
                 height: 24px !important;
             }
-
+ 
             .label-cell {
                 width: 60px !important;
                 font-size: 9px !important;
             }
-
+ 
             .right-side-table {
                 right: 10px !important;
                 top: 24px !important;
                 width: 520px !important;
                 height: 168px !important;
             }
-
+ 
             .right-side-table td {
                 height: 24px !important;
                 font-size: 9px !important;
             }
-
+ 
             .right-side-table td:last-child:not([colspan]) {
                 width: 60px !important;
             }
-
+ 
             .info-table input, .right-side-table input {
                 font-size: 11px !important;
                 height: 100% !important;
                 padding: 0 !important;
                 margin: 0 !important;
             }
-
+ 
             .right-side-table td[colspan="2"] {
                 height: 24px !important;
             }
-
+ 
             .not-cell {
                 font-size: 11px !important;
                 height: 24px !important;
             }
-
+ 
             input {
                 font-size: 15px !important;
                 font-weight: bold !important;
             }
-
+ 
             .system-input {
                 font-size: 15px !important;
                 font-weight: bold !important;
             }
-
+ 
             .spacer-part, .band-part {
                 font-size: 9px !important;
                 line-height: 16px !important;
             }
-
+ 
             th {
                 font-size: 13px !important;
                 padding: 1px !important;
                 font-weight: bold !important;
             }
-
+ 
             td {
                 height: 25px !important;
             }
-
+ 
             .data-table td input {
                 font-size: 15px !important;
                 font-weight: bold !important;
             }
-
+ 
             .footer-total {
                 font-size: 22px !important;
                 height: 32px !important;
                 font-weight: bold !important;
             }
-
+ 
             .row-num {
                 font-size: 15px !important;
                 font-weight: bold !important;
             }
         }
-
+ 
     </style>
 </head>
 <body onmousedown="startSelecting(event)" onmouseover="continueSelecting(event)" onmouseup="stopSelecting()">
-
+ 
 <div id="excel-menu">
     <div class="menu-item">
         <span>ڕەنگی باکگراوند</span>
@@ -207,7 +210,7 @@
     </div>
     <div class="menu-item" onclick="hideMenu()"><span>داخستن</span></div>
 </div>
-
+ 
 <div class="page-frame" id="printable-area">
     <div class="top-header-wrapper">
         <div class="header-left-side">
@@ -228,7 +231,7 @@
             <tr><td style="padding:0;"><div style="display:flex; width:100%;"><div class="spacer-part">سبیسر20</div><div class="band-part">باند ازرق</div></div></td><td class="label-cell">سبیسر/باند</td></tr>
             <tr><td><input type="text" id="glass_type" placeholder=""></td><td class="label-cell">نوع الجام</td></tr>
         </table>
-
+ 
         <table class="right-side-table">
             <tr><td colspan="2" class="not-cell">NOT</td></tr>
             <tr><td colspan="2" style="height:50px;"><input type="text"></td></tr>
@@ -238,7 +241,7 @@
             <tr><td><input type="text"></td><td>اسم سایق</td></tr>
         </table>
     </div>
-
+ 
     <table class="data-table">
         <thead>
             <tr>
@@ -262,7 +265,7 @@
             </tr>
         </tfoot>
     </table>
-
+ 
     <div class="controls-container no-print">
         <button class="action-btn" style="background-color: #34495e;" onclick="window.location.href='Dashboard.html'">🏠 گەڕانەوە</button>
         <button class="action-btn" style="background-color: #27ae60;" onclick="window.print()">🖨️ Print A4</button>
@@ -270,7 +273,7 @@
         <button class="action-btn" style="background-color: #e74c3c;" onclick="orderGlass()">🖼️ داواکردنی جام</button>
     </div>
 </div>
-
+ 
 <script>
     document.getElementById('todayDate').value = new Date().toISOString().split('T')[0];
     const tbody = document.getElementById('table-body');
@@ -295,10 +298,10 @@
             <td class="bg-grey-input"><input class="chain-res" readonly tabindex="-1"></td>`;
         tbody.appendChild(tr);
     }
-
+ 
     let isSelecting = false;
     let selectedInputs = new Set();
-
+ 
     function startSelecting(e) {
         if (e.button !== 0) return; 
         if (e.target.tagName !== 'INPUT') {
@@ -309,24 +312,24 @@
         if (!e.ctrlKey) clearSelection();
         addToSelection(e.target);
     }
-
+ 
     function continueSelecting(e) {
         if (isSelecting && e.target.tagName === 'INPUT') addToSelection(e.target);
     }
-
+ 
     function stopSelecting() { isSelecting = false; }
-
+ 
     function addToSelection(input) {
         selectedInputs.add(input);
         input.classList.add('selected-cell');
     }
-
+ 
     function clearSelection() {
         selectedInputs.forEach(input => input.classList.remove('selected-cell'));
         selectedInputs.clear();
         hideMenu();
     }
-
+ 
     let isEditingMode = false;
     document.addEventListener('keydown', function(e) {
         const active = document.activeElement;
@@ -335,9 +338,9 @@
         const row = cell.closest('tr');
         const colIdx = Array.from(cell.parentNode.children).indexOf(cell);
         let targetCell = null;
-
+ 
         if (!["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Enter", "Tab"].includes(e.key)) isEditingMode = true;
-
+ 
         if (e.key === "Enter" || e.key === "ArrowDown") {
             e.preventDefault();
             targetCell = row.nextElementSibling?.children[colIdx];
@@ -357,13 +360,13 @@
                 isEditingMode = false;
             }
         }
-
+ 
         if (targetCell) {
             const input = targetCell.querySelector('input');
             if (input) { input.focus(); if (!input.readOnly) input.select(); }
         }
     });
-
+ 
     const menu = document.getElementById('excel-menu');
     document.addEventListener('contextmenu', function(e) {
         if (selectedInputs.size > 0) {
@@ -373,17 +376,17 @@
             menu.style.top = e.pageY + 'px';
         }
     });
-
+ 
     function applyToSelected(prop, val) {
         selectedInputs.forEach(input => input.style[prop] = val);
         hideMenu();
     }
-
+ 
     function clearSelectedContent() {
         selectedInputs.forEach(input => { if (!input.readOnly) { input.value = ""; calculate(input); } });
         hideMenu();
     }
-
+ 
             function hideMenu() { if(document.getElementById('excel-menu')) document.getElementById('excel-menu').style.display = 'none'; }
 function calculate(el) {
         const row = el.closest('tr'); if (!row) return;
@@ -404,7 +407,7 @@ function calculate(el) {
             else if (h > 1600) chainVal = 110; else if (h > 1050) chainVal = 90;
             else if (h > 750) chainVal = 75;
             row.querySelector('.chain-res').value = chainVal;
-
+ 
             let res = (w * h) / 1000000;
             let finalM2 = (res < 1 ? 1 : res) * (q > 0 ? q : 1);
             row.querySelector('.m2-res').value = finalM2.toFixed(3);
@@ -414,7 +417,7 @@ function calculate(el) {
         }
         updateTotals();
     }
-
+ 
     function updateTotals() {
         let m2 = 0, qTotal = 0;
         document.querySelectorAll('.m2-res').forEach(i => m2 += parseFloat(i.value) || 0);
@@ -422,7 +425,7 @@ function calculate(el) {
         document.getElementById('grand-total').innerText = m2.toFixed(3);
         document.getElementById('q-total').innerText = qTotal;
     }
-
+ 
    function savePage() {
         const newData = {
             company: document.getElementById("company_name").value,
@@ -434,16 +437,16 @@ function calculate(el) {
             system: "میل 20",
             date: document.getElementById("todayDate").value
         };
-
+ 
         localStorage.setItem('2026_data', JSON.stringify(newData));
         let entries = JSON.parse(localStorage.getItem('all_orders_2026')) || [];
         entries.push({...newData, id: Date.now()});
         localStorage.setItem('all_orders_2026', JSON.stringify(entries));
-
+ 
         alert("پاشەکەوت کرا و ڕەوانەی خشتەی گشتی کرا");
         window.location.href = "2026.html";
     }
-
+ 
     function orderGlass() {
         let allData = [];
         document.querySelectorAll('#table-body tr').forEach((row, index) => {
@@ -460,3 +463,6 @@ function calculate(el) {
 </script>
 </body>
 </html>
+ 
+
+

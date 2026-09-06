@@ -367,8 +367,8 @@
 
     function applyCellBackground(color) {
         document.querySelectorAll('.selected-cell').forEach(cell => {
-            cell.style.backgroundColor = color;
-            cell.querySelectorAll('input').forEach(input => input.style.backgroundColor = color);
+            cell.style.setProperty('background-color', color, 'important');
+            cell.querySelectorAll('input').forEach(input => input.style.setProperty('background-color', color, 'important'));
         });
         hideMenu();
     }

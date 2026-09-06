@@ -409,8 +409,9 @@
     });
  
     function applyToSelected(prop, val) {
-        selectedCells.forEach(cell => cell.style[prop] = val);
-        selectedInputs.forEach(input => input.style[prop] = val);
+        const cssProperty = prop.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
+        selectedCells.forEach(cell => cell.style.setProperty(cssProperty, val, 'important'));
+        selectedInputs.forEach(input => input.style.setProperty(cssProperty, val, 'important'));
         hideMenu();
     }
 

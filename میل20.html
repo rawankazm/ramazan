@@ -11,13 +11,12 @@
         .action-btn { padding: 10px 25px; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 16px; text-decoration: none; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
         
         /* مێنۆی کلیکی ڕاست */
-        #excel-menu { position: fixed; display: none; background: #fff; border: 1px solid #ababab; box-shadow: 3px 3px 10px rgba(0,0,0,0.2); z-index: 10000; padding: 5px; width: 220px; max-height: calc(100vh - 16px); overflow-y: auto; border-radius: 4px; font-size: 14px; }
-        .menu-item { padding: 8px; cursor: pointer; border-bottom: 1px solid #eee; text-align: right; display: flex; justify-content: space-between; align-items: center; }
-        .menu-item:hover { background-color: #f0f0f0; }
-        .menu-item input[type="color"] { width: 25px; height: 25px; border: none; cursor: pointer; background: none; }
-        .menu-section { display: flex; gap: 4px; padding: 6px; border-bottom: 1px solid #eee; }
-        .menu-action { flex: 1; padding: 6px 4px; border: 1px solid #ccc; background: #fafafa; cursor: pointer; border-radius: 3px; font-weight: bold; }
-        .menu-action:hover { background: #e8f0fe; }
+        #excel-menu { position: fixed; display: none; background: #fff; border: 1px solid #ababab; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 10000; padding: 10px; width: 180px; border-radius: 4px; }
+        .menu-section { border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; }
+        .color-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 8px; }
+        .color-opt { width: 25px; height: 25px; border: 1px solid #ddd; cursor: pointer; border-radius: 3px; }
+        .menu-btn { width: 100%; padding: 5px; border: 1px solid #ccc; background: #f9f9f9; cursor: pointer; font-size: 20px; font-weight: bold; margin-top: 3px; border-radius: 3px; }
+        .tool-label { font-size: 10px; color: #666; font-weight: bold; margin-bottom: 3px; display: block; }
  
         /* ستایلی دیاریکردنی خانەکان */
         .selected-cell { background-color: #bbdefb !important; outline: 2px solid #2196f3 !important; z-index: 5; }
@@ -198,36 +197,12 @@
 <body onmousedown="startSelecting(event)" onmouseover="continueSelecting(event)" onmouseup="stopSelecting()">
  
 <div id="excel-menu">
-    <div class="menu-section">
-        <button class="menu-action" onclick="copySelected()">کۆپی</button>
-        <button class="menu-action" onclick="cutSelected()">بڕین</button>
-        <button class="menu-action" onclick="pasteSelected()">پەیست</button>
+    <div class="menu-section"><span class="tool-label">Alignment:</span><div style="display:flex; gap:4px;">
+        <button class="menu-btn" onclick="applyExcelStyle('textAlign', 'left')">L</button><button class="menu-btn" onclick="applyExcelStyle('textAlign', 'center')">C</button><button class="menu-btn" onclick="applyExcelStyle('textAlign', 'right')">R</button>
     </div>
-    <div class="menu-section">
-        <button class="menu-action" onclick="toggleSelectedStyle('fontWeight', 'bold')">B</button>
-        <button class="menu-action" onclick="toggleSelectedStyle('fontStyle', 'italic')">I</button>
-        <button class="menu-action" onclick="setSelectedStyle('textAlign', 'right')">R</button>
-        <button class="menu-action" onclick="setSelectedStyle('textAlign', 'center')">C</button>
-        <button class="menu-action" onclick="setSelectedStyle('textAlign', 'left')">L</button>
-    </div>
-    <div class="menu-section">
-        <button class="menu-action" onclick="setSelectedFontSize('12px')">12</button>
-        <button class="menu-action" onclick="setSelectedFontSize('16px')">16</button>
-        <button class="menu-action" onclick="setSelectedFontSize('20px')">20</button>
-    </div>
-    <div class="menu-item">
-        <span>ڕەنگی باکگراوند</span>
-        <input type="color" onchange="applyToSelected('backgroundColor', this.value)">
-    </div>
-    <div class="menu-item">
-        <span>ڕەنگی نووسین</span>
-        <input type="color" onchange="applyToSelected('color', this.value)">
-    </div>
-    <div class="menu-item" onclick="clearSelectedContent()" style="color: red; font-weight: bold;">
-        <span>سڕینەوەی ناوەڕۆک</span>
-        <span>🧹</span>
-    </div>
-    <div class="menu-item" onclick="hideMenu()"><span>داخستن</span></div>
+    </div><div class="menu-section"><span class="tool-label">Colors:</span><div class="color-grid">
+        <div class="color-opt" style="background:#ffffff;" onclick="applyExcelStyle('backgroundColor', '#ffffff')"></div><div class="color-opt" style="background:#ffeb3b;" onclick="applyExcelStyle('backgroundColor', '#ffeb3b')"></div><div class="color-opt" style="background:#4caf50;" onclick="applyExcelStyle('backgroundColor', '#4caf50')"></div><div class="color-opt" style="background:#f44336;" onclick="applyExcelStyle('backgroundColor', '#f44336')"></div>
+    </div></div><button class="menu-btn" style="color:red;" onclick="applyExcelStyle('clearContent')">Clear Selection</button>
 </div>
  
 <div class="page-frame" id="printable-area">
@@ -413,6 +388,11 @@
         selectedCells.forEach(cell => cell.style.setProperty(cssProperty, val, 'important'));
         selectedInputs.forEach(input => input.style.setProperty(cssProperty, val, 'important'));
         hideMenu();
+    }
+
+    function applyExcelStyle(prop, val) {
+        if (prop === 'clearContent') { clearSelectedContent(); return; }
+        applyToSelected(prop, val);
     }
 
     function selectedValues() {

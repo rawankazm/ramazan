@@ -36,6 +36,8 @@
 
         .title { font-size: 26px; font-weight: bold; color: #1a73e8; }
         .date-box { font-size: 18px; direction: ltr; font-weight: bold; }
+        [contenteditable="true"] { outline: none; cursor: text; }
+        [contenteditable="true"]:focus { background-color: #fffde7; box-shadow: 0 0 0 2px #f6c945; }
 
         table {
             width: 100%;
@@ -83,8 +85,8 @@
 
     <div class="a4-container">
         <div class="header-section">
-            <div class="title"> تهجیزات الیومي .</div>
-            <div class="date-box"> 2026 /5 / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+            <div class="title" contenteditable="true" data-editable-key="title"> تهجیزات الیومي .</div>
+            <div class="date-box" contenteditable="true" data-editable-key="date"> 2026 /5 / &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
         </div>
 
         <table>
@@ -108,14 +110,28 @@
                 <script>
                     for (let i = 1; i <= 18; i++) {
                         document.write(`<tr>
-                            <td>${i}</td><td></td><td></td><td></td><td></td><td></td>
-                            <td></td><td></td><td></td><td></td><td><input type="checkbox"></td><td></td>
+                            <td>${i}</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td>
+                            <td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td><input type="checkbox"></td><td contenteditable="true"></td>
                         </tr>`);
                     }
                 </script>
             </tbody>
         </table>
     </div>
+
+    <script>
+        const storageKey = 'daily-equipment-sheet';
+        const editableItems = document.querySelectorAll('[contenteditable="true"]');
+        const savedItems = JSON.parse(localStorage.getItem(storageKey) || '[]');
+
+        editableItems.forEach((item, index) => {
+            if (savedItems[index] !== undefined) item.innerHTML = savedItems[index];
+            item.addEventListener('input', () => {
+                const values = Array.from(editableItems, editableItem => editableItem.innerHTML);
+                localStorage.setItem(storageKey, JSON.stringify(values));
+            });
+        });
+    </script>
 
 </body>
 </html>

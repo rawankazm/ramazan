@@ -663,9 +663,21 @@ function calculate(el) {
     }
 
     // --- دەستکاریکردنی قەبارەی خانەکان هاوشێوەی مایکرۆسۆفت ئێکسل (Excel Cell Resizing) ---
-    var STORAGE_KEY_COLS = 'mil20_excel_col_widths_v3';
-    var STORAGE_KEY_ROWS = 'mil20_excel_row_heights_v3';
-    var STORAGE_KEY_TOTAL = 'mil20_excel_table_total_v3';
+    // پاککردنەوەی پاشەکەوتی کۆن کە ببووە هۆی کەمبوونەوەی قەبارەی خشتەکە
+    try {
+        localStorage.removeItem('mil20_excel_col_widths_v1');
+        localStorage.removeItem('mil20_excel_col_widths_v2');
+        localStorage.removeItem('mil20_excel_col_widths_v3');
+        localStorage.removeItem('mil20_excel_row_heights_v1');
+        localStorage.removeItem('mil20_excel_row_heights_v2');
+        localStorage.removeItem('mil20_excel_row_heights_v3');
+        localStorage.removeItem('mil20_excel_table_total_v3');
+        localStorage.removeItem('mil20_table_total_width');
+    } catch(e){}
+
+    var STORAGE_KEY_COLS = 'mil20_excel_col_widths_v4';
+    var STORAGE_KEY_ROWS = 'mil20_excel_row_heights_v4';
+    var STORAGE_KEY_TOTAL = 'mil20_excel_table_total_v4';
 
     var currentResizer = null;
     var isColResizing = false;
@@ -687,6 +699,9 @@ function calculate(el) {
         const dataTable = document.querySelector('table.data-table');
         if (!dataTable) return;
         const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+
+        dataTable.style.width = '100%';
+        dataTable.style.minWidth = '100%';
 
         if (!document.getElementById('excel-resize-tooltip')) {
             resizeTooltip = document.createElement('div');
@@ -719,21 +734,20 @@ function calculate(el) {
         } catch (err) { savedColWidths = {}; }
 
         const ths = Array.from(dataTable.querySelectorAll('thead th'));
+        const hasSaved = Object.keys(savedColWidths).length > 0;
         let totalW = 0;
+
         ths.forEach((th, idx) => {
-            if (savedColWidths[idx]) {
+            if (hasSaved && savedColWidths[idx]) {
                 th.style.width = savedColWidths[idx] + 'px';
-            } else {
-                const renderedW = Math.round(th.getBoundingClientRect().width);
-                th.style.width = (renderedW > 25 ? renderedW : 70) + 'px';
+                totalW += parseFloat(th.style.width);
             }
-            totalW += parseFloat(th.style.width);
 
             // دانانی دەسکی ڕاکێشان لەسەر هێڵی نێوان ستوونەکان
             if (!th.querySelector('.col-resizer')) {
                 const resizer = document.createElement('div');
                 resizer.className = 'col-resizer';
-                resizer.title = 'ڕابکێشە بۆ پانکردنەوە یان تەسککردنەوەی تەواوی ستوونەکە (دوو کلیک بۆ قەبارەی خۆکار)';
+                resizer.title = 'ڕابکێشە بۆ پان یان تەسککردنەوەی تەواوی ستوونەکە (دوو کلیک بۆ خۆکار)';
                 th.appendChild(resizer);
 
                 resizer.addEventListener('mousedown', (e) => onColMouseDown(e, th, idx));
@@ -741,15 +755,15 @@ function calculate(el) {
             }
         });
 
-        // جێگیرکردنی پێوانەی تەواوی خشتە بەپێی کۆی پیکسڵی ستوونەکان
-        const savedTotalW = localStorage.getItem(STORAGE_KEY_TOTAL);
-        if (savedTotalW) {
-            dataTable.style.width = savedTotalW;
-            dataTable.style.minWidth = savedTotalW;
-        } else if (totalW > 0) {
-            const finalW = Math.round(totalW) + 'px';
-            dataTable.style.width = finalW;
-            dataTable.style.minWidth = finalW;
+        // هەمیشە خشتەکە با 100%ی پانایی شاشەکە بگرێت ئەگەر لە شاشە گەورەتر نەبێت
+        const containerWidth = tableWrapper.clientWidth || window.innerWidth;
+        const savedTotalW = parseFloat(localStorage.getItem(STORAGE_KEY_TOTAL));
+        if (hasSaved && savedTotalW && savedTotalW > containerWidth) {
+            dataTable.style.width = Math.round(savedTotalW) + 'px';
+            dataTable.style.minWidth = Math.round(savedTotalW) + 'px';
+        } else {
+            dataTable.style.width = '100%';
+            dataTable.style.minWidth = '100%';
         }
 
         // 2. Row Heights
@@ -758,7 +772,6 @@ function calculate(el) {
             savedRowHeights = JSON.parse(localStorage.getItem(STORAGE_KEY_ROWS) || '{}');
         } catch (err) { savedRowHeights = {}; }
 
-        // ڕیزی سەردێڕ لە سەرەوە
         const theadRow = dataTable.querySelector('thead tr');
         if (theadRow) {
             Array.from(theadRow.children).forEach(th => {
@@ -772,7 +785,6 @@ function calculate(el) {
             });
         }
 
-        // ڕیزەکانی خشتە لە ناوەوە
         const rows = Array.from(document.querySelectorAll('#table-body tr'));
         rows.forEach((tr, rIdx) => {
             if (savedRowHeights[rIdx]) {
@@ -781,7 +793,6 @@ function calculate(el) {
                 Array.from(tr.children).forEach(td => td.style.height = h);
             }
 
-            // دانانی دەسکی بەرزی لەسەر هەموو خانەکانی ڕیزەکە (لە تەنیشت و سەر هێڵی ژێرەوە)
             Array.from(tr.children).forEach(cell => {
                 if (!cell.querySelector('.row-resizer')) {
                     const resizer = document.createElement('div');
@@ -804,14 +815,21 @@ function calculate(el) {
         const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
         const allThs = Array.from(dataTable.querySelectorAll('thead th'));
 
-        // پێش دەستپێکردنی ڕاکێشان، پێوانەی پیکسڵی هەموو ستوونەکان جێگیر دەکەین
+        // وەرگرتنی پێوانەی پیکسڵی هەموو ستوونەکان بەپێی شاشەی ئێستا
         allThs.forEach(h => {
             h.style.width = Math.round(h.getBoundingClientRect().width) + 'px';
         });
 
-        let currentTotal = allThs.reduce((sum, h) => sum + parseFloat(h.style.width), 0);
-        dataTable.style.width = Math.round(currentTotal) + 'px';
-        dataTable.style.minWidth = Math.round(currentTotal) + 'px';
+        const currentTotal = allThs.reduce((sum, h) => sum + parseFloat(h.style.width), 0);
+        const containerWidth = tableWrapper.clientWidth || window.innerWidth;
+        
+        if (currentTotal > containerWidth) {
+            dataTable.style.width = Math.round(currentTotal) + 'px';
+            dataTable.style.minWidth = Math.round(currentTotal) + 'px';
+        } else {
+            dataTable.style.width = '100%';
+            dataTable.style.minWidth = '100%';
+        }
 
         isColResizing = true;
         currentResizer = e.currentTarget;
@@ -819,7 +837,7 @@ function calculate(el) {
         targetColIdx = idx;
         startX = e.clientX;
         startWidth = parseFloat(th.style.width) || th.getBoundingClientRect().width;
-        startTableWidth = currentTotal;
+        startTableWidth = Math.max(currentTotal, containerWidth);
 
         currentResizer.classList.add('active');
         document.body.style.cursor = 'col-resize';
@@ -848,10 +866,16 @@ function calculate(el) {
 
         const dataTable = document.querySelector('table.data-table');
         const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+        const containerWidth = tableWrapper.clientWidth || window.innerWidth;
         
         const newTotal = Math.round(startTableWidth + delta);
-        dataTable.style.width = newTotal + 'px';
-        dataTable.style.minWidth = newTotal + 'px';
+        if (newTotal > containerWidth) {
+            dataTable.style.width = newTotal + 'px';
+            dataTable.style.minWidth = newTotal + 'px';
+        } else {
+            dataTable.style.width = '100%';
+            dataTable.style.minWidth = '100%';
+        }
 
         const wrapperRect = tableWrapper.getBoundingClientRect();
         const thRect = targetTh.getBoundingClientRect();
@@ -910,13 +934,21 @@ function calculate(el) {
         });
 
         const oldW = parseFloat(th.style.width) || th.getBoundingClientRect().width;
-        const newW = Math.min(maxWidth, 320);
+        const newW = Math.min(maxWidth, 350);
         const delta = newW - oldW;
 
         th.style.width = newW + 'px';
         const currentTableW = parseFloat(dataTable.style.width) || dataTable.offsetWidth;
-        dataTable.style.width = Math.round(currentTableW + delta) + 'px';
-        dataTable.style.minWidth = dataTable.style.width;
+        const finalTableW = Math.round(currentTableW + delta);
+        const containerWidth = dataTable.parentElement.clientWidth || window.innerWidth;
+
+        if (finalTableW > containerWidth) {
+            dataTable.style.width = finalTableW + 'px';
+            dataTable.style.minWidth = finalTableW + 'px';
+        } else {
+            dataTable.style.width = '100%';
+            dataTable.style.minWidth = '100%';
+        }
 
         saveColWidths();
     }
@@ -1026,10 +1058,10 @@ function calculate(el) {
         const dataTable = document.querySelector('table.data-table');
         if (!dataTable) return;
 
-        const defaultWidths = [120, 35, 100, 80, 80, 80, 80, 80, 80, 80, 80, 65, 80, 95, 75];
+        const defaultWidths = [100, 20, 60, 50, 50, 50, 50, 50, 50, 50, 50, 40, 50, 70, 45];
         const ths = dataTable.querySelectorAll('thead th');
         ths.forEach((th, idx) => {
-            th.style.width = (defaultWidths[idx] || 80) + 'px';
+            th.style.width = (defaultWidths[idx] || 50) + 'px';
         });
 
         const rows = document.querySelectorAll('#table-body tr');
@@ -1038,9 +1070,8 @@ function calculate(el) {
             Array.from(tr.children).forEach(td => td.style.height = '38px');
         });
 
-        const totalW = Array.from(ths).reduce((s, h) => s + parseFloat(h.style.width), 0);
-        dataTable.style.width = Math.round(totalW) + 'px';
-        dataTable.style.minWidth = Math.round(totalW) + 'px';
+        dataTable.style.width = '100%';
+        dataTable.style.minWidth = '100%';
         hideMenu();
     }
 

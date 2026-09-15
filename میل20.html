@@ -106,39 +106,55 @@
         .col-resizer {
             position: absolute;
             top: 0;
-            right: 0;
-            width: 8px;
+            right: -7px;
+            width: 14px;
             height: 100%;
-            cursor: col-resize;
+            cursor: col-resize !important;
             user-select: none;
-            z-index: 50;
+            z-index: 1000;
             background: transparent;
-            transition: background-color 0.15s ease;
         }
-        th:hover .col-resizer {
-            background-color: rgba(16, 124, 65, 0.45);
+        .col-resizer::after {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            background-color: #107c41;
+            opacity: 0;
+            transition: opacity 0.1s ease;
         }
-        .col-resizer:hover, .col-resizer.active {
-            background-color: #107c41 !important; /* Excel Signature Green */
+        .col-resizer:hover::after, .col-resizer.active::after {
+            opacity: 1;
+            box-shadow: 0 0 4px rgba(16, 124, 65, 0.9);
         }
 
         .row-resizer {
             position: absolute;
-            bottom: 0;
+            bottom: -7px;
             left: 0;
             width: 100%;
-            height: 8px;
-            cursor: row-resize;
+            height: 14px;
+            cursor: row-resize !important;
             user-select: none;
-            z-index: 50;
+            z-index: 1000;
             background: transparent;
-            transition: background-color 0.15s ease;
         }
-        .row-num:hover .row-resizer {
-            background-color: rgba(16, 124, 65, 0.45);
+        .row-resizer::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #107c41;
+            opacity: 0;
+            transition: opacity 0.1s ease;
         }
-        .row-resizer:hover, .row-resizer.active {
-            background-color: #107c41 !important; /* Excel Signature Green */
+        .row-resizer:hover::after, .row-resizer.active::after {
+            opacity: 1;
+            box-shadow: 0 0 4px rgba(16, 124, 65, 0.9);
         }
 
         /* هێڵەکانی رێبەری کاتی ڕاکێشان (Guide Lines) */
@@ -148,7 +164,8 @@
             top: 0;
             width: 2px;
             background-color: #107c41;
-            z-index: 9999;
+            box-shadow: 0 0 3px rgba(16, 124, 65, 0.9);
+            z-index: 99999;
             pointer-events: none;
         }
         #row-resize-guide {
@@ -157,7 +174,8 @@
             left: 0;
             height: 2px;
             background-color: #107c41;
-            z-index: 9999;
+            box-shadow: 0 0 3px rgba(16, 124, 65, 0.9);
+            z-index: 99999;
             pointer-events: none;
         }
 
@@ -645,8 +663,9 @@ function calculate(el) {
     }
 
     // --- دەستکاریکردنی قەبارەی خانەکان هاوشێوەی مایکرۆسۆفت ئێکسل (Excel Cell Resizing) ---
-    var STORAGE_KEY_COLS = 'mil20_excel_col_widths_v1';
-    var STORAGE_KEY_ROWS = 'mil20_excel_row_heights_v1';
+    var STORAGE_KEY_COLS = 'mil20_excel_col_widths_v3';
+    var STORAGE_KEY_ROWS = 'mil20_excel_row_heights_v3';
+    var STORAGE_KEY_TOTAL = 'mil20_excel_table_total_v3';
 
     var currentResizer = null;
     var isColResizing = false;
@@ -655,6 +674,7 @@ function calculate(el) {
     var startY = 0;
     var startWidth = 0;
     var startHeight = 0;
+    var startTableWidth = 0;
     var targetTh = null;
     var targetTr = null;
     var targetColIdx = -1;
@@ -668,7 +688,6 @@ function calculate(el) {
         if (!dataTable) return;
         const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
 
-        // دروستکردنی باڵۆنی زانیاری ئەگەر نەبێت
         if (!document.getElementById('excel-resize-tooltip')) {
             resizeTooltip = document.createElement('div');
             resizeTooltip.id = 'excel-resize-tooltip';
@@ -677,7 +696,6 @@ function calculate(el) {
             resizeTooltip = document.getElementById('excel-resize-tooltip');
         }
 
-        // دروستکردنی هێڵی رێبەری ستوون
         if (!document.getElementById('col-resize-guide')) {
             colGuide = document.createElement('div');
             colGuide.id = 'col-resize-guide';
@@ -686,7 +704,6 @@ function calculate(el) {
             colGuide = document.getElementById('col-resize-guide');
         }
 
-        // دروستکردنی هێڵی رێبەری ڕیز
         if (!document.getElementById('row-resize-guide')) {
             rowGuide = document.createElement('div');
             rowGuide.id = 'row-resize-guide';
@@ -695,23 +712,28 @@ function calculate(el) {
             rowGuide = document.getElementById('row-resize-guide');
         }
 
-        // خوێندنەوەی پێوانە پاشەکەوتکراوەکانی ستوون لە localStorage
+        // 1. Column Widths
         let savedColWidths = {};
         try {
             savedColWidths = JSON.parse(localStorage.getItem(STORAGE_KEY_COLS) || '{}');
         } catch (err) { savedColWidths = {}; }
 
-        const ths = dataTable.querySelectorAll('thead th');
+        const ths = Array.from(dataTable.querySelectorAll('thead th'));
+        let totalW = 0;
         ths.forEach((th, idx) => {
             if (savedColWidths[idx]) {
                 th.style.width = savedColWidths[idx] + 'px';
+            } else {
+                const renderedW = Math.round(th.getBoundingClientRect().width);
+                th.style.width = (renderedW > 25 ? renderedW : 70) + 'px';
             }
+            totalW += parseFloat(th.style.width);
 
-            // لکاندنی دەسکی ستوون (.col-resizer)
+            // دانانی دەسکی ڕاکێشان لەسەر هێڵی نێوان ستوونەکان
             if (!th.querySelector('.col-resizer')) {
                 const resizer = document.createElement('div');
                 resizer.className = 'col-resizer';
-                resizer.title = 'ڕابکێشە بۆ گۆڕینی پانی ستوون (دوو کلیک بۆ قەبارەی خۆکار)';
+                resizer.title = 'ڕابکێشە بۆ پانکردنەوە یان تەسککردنەوەی تەواوی ستوونەکە (دوو کلیک بۆ قەبارەی خۆکار)';
                 th.appendChild(resizer);
 
                 resizer.addEventListener('mousedown', (e) => onColMouseDown(e, th, idx));
@@ -719,54 +741,59 @@ function calculate(el) {
             }
         });
 
-        // خوێندنەوەی پێوانە پاشەکەوتکراوەکانی ڕیز لە localStorage
+        // جێگیرکردنی پێوانەی تەواوی خشتە بەپێی کۆی پیکسڵی ستوونەکان
+        const savedTotalW = localStorage.getItem(STORAGE_KEY_TOTAL);
+        if (savedTotalW) {
+            dataTable.style.width = savedTotalW;
+            dataTable.style.minWidth = savedTotalW;
+        } else if (totalW > 0) {
+            const finalW = Math.round(totalW) + 'px';
+            dataTable.style.width = finalW;
+            dataTable.style.minWidth = finalW;
+        }
+
+        // 2. Row Heights
         let savedRowHeights = {};
         try {
             savedRowHeights = JSON.parse(localStorage.getItem(STORAGE_KEY_ROWS) || '{}');
         } catch (err) { savedRowHeights = {}; }
 
-        const rows = document.querySelectorAll('#table-body tr');
+        // ڕیزی سەردێڕ لە سەرەوە
+        const theadRow = dataTable.querySelector('thead tr');
+        if (theadRow) {
+            Array.from(theadRow.children).forEach(th => {
+                if (!th.querySelector('.row-resizer')) {
+                    const rResizer = document.createElement('div');
+                    rResizer.className = 'row-resizer';
+                    rResizer.title = 'ڕابکێشە بۆ گۆڕینی بەرزی سەردێڕ';
+                    th.appendChild(rResizer);
+                    rResizer.addEventListener('mousedown', (e) => onRowMouseDown(e, theadRow, -1));
+                }
+            });
+        }
+
+        // ڕیزەکانی خشتە لە ناوەوە
+        const rows = Array.from(document.querySelectorAll('#table-body tr'));
         rows.forEach((tr, rIdx) => {
             if (savedRowHeights[rIdx]) {
                 const h = savedRowHeights[rIdx] + 'px';
                 tr.style.height = h;
-                tr.querySelectorAll('td').forEach(td => td.style.height = h);
+                Array.from(tr.children).forEach(td => td.style.height = h);
             }
 
-            // لکاندنی دەسکی بەرزی ڕیز (.row-resizer) لەسەر خانەی ژمارەی ڕیز (#)
-            const rowNumCell = tr.querySelector('.row-num');
-            if (rowNumCell && !rowNumCell.querySelector('.row-resizer')) {
-                const resizer = document.createElement('div');
-                resizer.className = 'row-resizer';
-                resizer.title = 'ڕابکێشە بۆ گۆڕینی بەرزی ڕیز (دوو کلیک بۆ 38px)';
-                rowNumCell.appendChild(resizer);
+            // دانانی دەسکی بەرزی لەسەر هەموو خانەکانی ڕیزەکە (لە تەنیشت و سەر هێڵی ژێرەوە)
+            Array.from(tr.children).forEach(cell => {
+                if (!cell.querySelector('.row-resizer')) {
+                    const resizer = document.createElement('div');
+                    resizer.className = 'row-resizer';
+                    resizer.title = 'ڕابکێشە بۆ کەم یان زیادکردنی بەرزی ڕیز (دوو کلیک بۆ 38px)';
+                    cell.appendChild(resizer);
 
-                resizer.addEventListener('mousedown', (e) => onRowMouseDown(e, tr, rIdx));
-                resizer.addEventListener('dblclick', (e) => onRowDblClick(e, tr, rIdx));
-            }
+                    resizer.addEventListener('mousedown', (e) => onRowMouseDown(e, tr, rIdx));
+                    resizer.addEventListener('dblclick', (e) => onRowDblClick(e, tr, rIdx));
+                }
+            });
         });
-
-        updateTableWidthFromThs();
-    }
-
-    function updateTableWidthFromThs() {
-        const dataTable = document.querySelector('table.data-table');
-        if (!dataTable) return;
-        const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
-        const ths = dataTable.querySelectorAll('thead th');
-        let total = 0;
-        ths.forEach(th => {
-            const w = parseFloat(th.style.width) || th.getBoundingClientRect().width || 50;
-            total += w;
-        });
-        const containerWidth = tableWrapper.clientWidth;
-        if (total > containerWidth) {
-            dataTable.style.width = Math.round(total) + 'px';
-            dataTable.style.minWidth = Math.round(total) + 'px';
-        } else {
-            dataTable.style.width = '100%';
-            dataTable.style.minWidth = '100%';
-        }
     }
 
     function onColMouseDown(e, th, idx) {
@@ -775,21 +802,24 @@ function calculate(el) {
 
         const dataTable = document.querySelector('table.data-table');
         const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
-        const allThs = dataTable.querySelectorAll('thead th');
+        const allThs = Array.from(dataTable.querySelectorAll('thead th'));
 
-        // جێگیرکردنی پێوانەی هەموو ستوونەکان پێش دەستپێکردنی ڕاکێشان تا ستوونەکانی تر تێکنەچن
+        // پێش دەستپێکردنی ڕاکێشان، پێوانەی پیکسڵی هەموو ستوونەکان جێگیر دەکەین
         allThs.forEach(h => {
-            if (!h.style.width || h.style.width.endsWith('%')) {
-                h.style.width = Math.round(h.getBoundingClientRect().width) + 'px';
-            }
+            h.style.width = Math.round(h.getBoundingClientRect().width) + 'px';
         });
 
+        let currentTotal = allThs.reduce((sum, h) => sum + parseFloat(h.style.width), 0);
+        dataTable.style.width = Math.round(currentTotal) + 'px';
+        dataTable.style.minWidth = Math.round(currentTotal) + 'px';
+
         isColResizing = true;
-        currentResizer = e.target;
+        currentResizer = e.currentTarget;
         targetTh = th;
         targetColIdx = idx;
         startX = e.clientX;
-        startWidth = th.getBoundingClientRect().width;
+        startWidth = parseFloat(th.style.width) || th.getBoundingClientRect().width;
+        startTableWidth = currentTotal;
 
         currentResizer.classList.add('active');
         document.body.style.cursor = 'col-resize';
@@ -802,7 +832,7 @@ function calculate(el) {
         colGuide.style.left = (thRect.right - wrapperRect.left + tableWrapper.scrollLeft) + 'px';
         colGuide.style.display = 'block';
 
-        showResizeTooltip(e.clientX, e.clientY, `پانی: ${Math.round(startWidth)}px`);
+        showResizeTooltip(e.clientX, e.clientY, `پانی ستوون: ${Math.round(startWidth)}px`);
 
         window.addEventListener('mousemove', onColMouseMove);
         window.addEventListener('mouseup', onColMouseUp);
@@ -811,20 +841,24 @@ function calculate(el) {
     function onColMouseMove(e) {
         if (!isColResizing || !targetTh) return;
         const diffX = e.clientX - startX;
-        const newWidth = Math.max(25, Math.round(startWidth + diffX));
+        const newWidth = Math.max(30, Math.round(startWidth + diffX));
+        const delta = newWidth - startWidth;
 
         targetTh.style.width = newWidth + 'px';
 
         const dataTable = document.querySelector('table.data-table');
         const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+        
+        const newTotal = Math.round(startTableWidth + delta);
+        dataTable.style.width = newTotal + 'px';
+        dataTable.style.minWidth = newTotal + 'px';
+
         const wrapperRect = tableWrapper.getBoundingClientRect();
         const thRect = targetTh.getBoundingClientRect();
-
         colGuide.style.left = (thRect.right - wrapperRect.left + tableWrapper.scrollLeft) + 'px';
         colGuide.style.height = dataTable.offsetHeight + 'px';
 
-        showResizeTooltip(e.clientX, e.clientY, `پانی: ${newWidth}px`);
-        updateTableWidthFromThs();
+        showResizeTooltip(e.clientX, e.clientY, `پانی ستوون: ${newWidth}px`);
     }
 
     function onColMouseUp() {
@@ -848,9 +882,10 @@ function calculate(el) {
         const ths = dataTable.querySelectorAll('thead th');
         const saved = {};
         ths.forEach((th, idx) => {
-            saved[idx] = Math.round(th.getBoundingClientRect().width);
+            saved[idx] = parseFloat(th.style.width) || Math.round(th.getBoundingClientRect().width);
         });
         localStorage.setItem(STORAGE_KEY_COLS, JSON.stringify(saved));
+        localStorage.setItem(STORAGE_KEY_TOTAL, dataTable.style.width);
     }
 
     function onColDblClick(e, th, idx) {
@@ -860,7 +895,7 @@ function calculate(el) {
         const dataTable = document.querySelector('table.data-table');
         let maxWidth = 45;
         const thText = th.innerText.trim();
-        maxWidth = Math.max(maxWidth, thText.length * 10 + 24);
+        maxWidth = Math.max(maxWidth, thText.length * 10 + 26);
 
         const rows = dataTable.querySelectorAll('#table-body tr');
         rows.forEach(row => {
@@ -869,13 +904,20 @@ function calculate(el) {
                 const inp = cell.querySelector('input');
                 const val = (inp ? inp.value : cell.innerText) || '';
                 if (val.trim().length > 0) {
-                    maxWidth = Math.max(maxWidth, val.trim().length * 10 + 24);
+                    maxWidth = Math.max(maxWidth, val.trim().length * 10 + 26);
                 }
             }
         });
 
-        th.style.width = Math.min(maxWidth, 280) + 'px';
-        updateTableWidthFromThs();
+        const oldW = parseFloat(th.style.width) || th.getBoundingClientRect().width;
+        const newW = Math.min(maxWidth, 320);
+        const delta = newW - oldW;
+
+        th.style.width = newW + 'px';
+        const currentTableW = parseFloat(dataTable.style.width) || dataTable.offsetWidth;
+        dataTable.style.width = Math.round(currentTableW + delta) + 'px';
+        dataTable.style.minWidth = dataTable.style.width;
+
         saveColWidths();
     }
 
@@ -887,7 +929,7 @@ function calculate(el) {
         const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
 
         isRowResizing = true;
-        currentResizer = e.target;
+        currentResizer = e.currentTarget;
         targetTr = tr;
         startY = e.clientY;
         startHeight = tr.getBoundingClientRect().height;
@@ -903,7 +945,7 @@ function calculate(el) {
         rowGuide.style.top = (trRect.bottom - wrapperRect.top + tableWrapper.scrollTop) + 'px';
         rowGuide.style.display = 'block';
 
-        showResizeTooltip(e.clientX, e.clientY, `بەرزی: ${Math.round(startHeight)}px`);
+        showResizeTooltip(e.clientX, e.clientY, `بەرزی ڕیز: ${Math.round(startHeight)}px`);
 
         window.addEventListener('mousemove', onRowMouseMove);
         window.addEventListener('mouseup', onRowMouseUp);
@@ -912,10 +954,12 @@ function calculate(el) {
     function onRowMouseMove(e) {
         if (!isRowResizing || !targetTr) return;
         const diffY = e.clientY - startY;
-        const newHeight = Math.max(26, Math.round(startHeight + diffY));
+        const newHeight = Math.max(25, Math.round(startHeight + diffY));
 
         targetTr.style.height = newHeight + 'px';
-        targetTr.querySelectorAll('td').forEach(td => td.style.height = newHeight + 'px');
+        Array.from(targetTr.children).forEach(td => {
+            td.style.height = newHeight + 'px';
+        });
 
         const dataTable = document.querySelector('table.data-table');
         const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
@@ -925,7 +969,7 @@ function calculate(el) {
         rowGuide.style.top = (trRect.bottom - wrapperRect.top + tableWrapper.scrollTop) + 'px';
         rowGuide.style.width = dataTable.offsetWidth + 'px';
 
-        showResizeTooltip(e.clientX, e.clientY, `بەرزی: ${newHeight}px`);
+        showResizeTooltip(e.clientX, e.clientY, `بەرزی ڕیز: ${newHeight}px`);
     }
 
     function onRowMouseUp() {
@@ -956,7 +1000,7 @@ function calculate(el) {
         e.preventDefault();
         e.stopPropagation();
         tr.style.height = '38px';
-        tr.querySelectorAll('td').forEach(td => td.style.height = '38px');
+        Array.from(tr.children).forEach(td => td.style.height = '38px');
         saveRowHeights();
     }
 
@@ -977,28 +1021,26 @@ function calculate(el) {
 
         localStorage.removeItem(STORAGE_KEY_COLS);
         localStorage.removeItem(STORAGE_KEY_ROWS);
+        localStorage.removeItem(STORAGE_KEY_TOTAL);
 
         const dataTable = document.querySelector('table.data-table');
         if (!dataTable) return;
 
-        const defaultWidths = [100, 20, 60, 50, 50, 50, 50, 50, 50, 50, 50, 40, 50, 70, 45];
+        const defaultWidths = [120, 35, 100, 80, 80, 80, 80, 80, 80, 80, 80, 65, 80, 95, 75];
         const ths = dataTable.querySelectorAll('thead th');
         ths.forEach((th, idx) => {
-            if (defaultWidths[idx]) {
-                th.style.width = defaultWidths[idx] + 'px';
-            } else {
-                th.style.width = '';
-            }
+            th.style.width = (defaultWidths[idx] || 80) + 'px';
         });
 
         const rows = document.querySelectorAll('#table-body tr');
         rows.forEach(tr => {
             tr.style.height = '38px';
-            tr.querySelectorAll('td').forEach(td => td.style.height = '38px');
+            Array.from(tr.children).forEach(td => td.style.height = '38px');
         });
 
-        dataTable.style.width = '100%';
-        dataTable.style.minWidth = '100%';
+        const totalW = Array.from(ths).reduce((s, h) => s + parseFloat(h.style.width), 0);
+        dataTable.style.width = Math.round(totalW) + 'px';
+        dataTable.style.minWidth = Math.round(totalW) + 'px';
         hideMenu();
     }
 

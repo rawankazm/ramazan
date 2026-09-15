@@ -19,7 +19,7 @@
         .tool-label { font-size: 10px; color: #666; font-weight: bold; margin-bottom: 3px; display: block; }
  
         /* ستایلی دیاریکردنی خانەکان */
-        .selected-cell { background-color: #bbdefb !important; outline: 2px solid #2196f3 !important; z-index: 5; }
+        .selected-cell { outline: 2px solid #2196f3 !important; background-color: rgba(33, 150, 243, 0.25) !important; z-index: 5; }
  
         .page-frame { padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; }
         .top-header-wrapper { display: flex; flex-direction: row; justify-content: flex-start; align-items: flex-start; margin-bottom: 8px; height: 275px; position: relative; }
@@ -415,9 +415,6 @@
             <td class="bg-grey-input"><input class="chain-res" readonly tabindex="-1"></td>`;
         tbody.appendChild(tr);
     }
-
-    // دەستپێکردنی قەبارەی خانەکان هاوشێوەی مایکرۆسۆفت ئێکسل
-    initExcelResizing();
  
     let isSelecting = false;
     let selectedInputs = new Set();
@@ -513,6 +510,7 @@
         const cssProperty = prop.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`);
         selectedCells.forEach(cell => cell.style.setProperty(cssProperty, val, 'important'));
         selectedInputs.forEach(input => input.style.setProperty(cssProperty, val, 'important'));
+        clearSelection();
         hideMenu();
     }
 
@@ -647,23 +645,23 @@ function calculate(el) {
     }
 
     // --- دەستکاریکردنی قەبارەی خانەکان هاوشێوەی مایکرۆسۆفت ئێکسل (Excel Cell Resizing) ---
-    const STORAGE_KEY_COLS = 'mil20_excel_col_widths_v1';
-    const STORAGE_KEY_ROWS = 'mil20_excel_row_heights_v1';
+    var STORAGE_KEY_COLS = 'mil20_excel_col_widths_v1';
+    var STORAGE_KEY_ROWS = 'mil20_excel_row_heights_v1';
 
-    let currentResizer = null;
-    let isColResizing = false;
-    let isRowResizing = false;
-    let startX = 0;
-    let startY = 0;
-    let startWidth = 0;
-    let startHeight = 0;
-    let targetTh = null;
-    let targetTr = null;
-    let targetColIdx = -1;
+    var currentResizer = null;
+    var isColResizing = false;
+    var isRowResizing = false;
+    var startX = 0;
+    var startY = 0;
+    var startWidth = 0;
+    var startHeight = 0;
+    var targetTh = null;
+    var targetTr = null;
+    var targetColIdx = -1;
 
-    let resizeTooltip = null;
-    let colGuide = null;
-    let rowGuide = null;
+    var resizeTooltip = null;
+    var colGuide = null;
+    var rowGuide = null;
 
     function initExcelResizing() {
         const dataTable = document.querySelector('table.data-table');
@@ -1013,6 +1011,20 @@ function calculate(el) {
         });
         hideMenu();
     }
+
+    // دەستپێکردنی قەبارەی خانەکان پاش باربوونی خشتە
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initExcelResizing);
+    } else {
+        initExcelResizing();
+    }
+
+    // داخستنی مێنۆ بە کلیک لە دەرەوەی
+    document.addEventListener('mousedown', function(e) {
+        if (!e.target.closest('#excel-menu') && menu && menu.style.display === 'block') {
+            hideMenu();
+        }
+    });
 </script>
 </body>
 </html>

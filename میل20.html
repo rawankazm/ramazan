@@ -106,8 +106,8 @@
         .col-resizer {
             position: absolute;
             top: 0;
-            right: -3px;
-            width: 7px;
+            right: 0;
+            width: 8px;
             height: 100%;
             cursor: col-resize;
             user-select: none;
@@ -116,7 +116,7 @@
             transition: background-color 0.15s ease;
         }
         th:hover .col-resizer {
-            background-color: rgba(16, 124, 65, 0.35);
+            background-color: rgba(16, 124, 65, 0.45);
         }
         .col-resizer:hover, .col-resizer.active {
             background-color: #107c41 !important; /* Excel Signature Green */
@@ -124,10 +124,10 @@
 
         .row-resizer {
             position: absolute;
-            bottom: -3px;
+            bottom: 0;
             left: 0;
             width: 100%;
-            height: 7px;
+            height: 8px;
             cursor: row-resize;
             user-select: none;
             z-index: 50;
@@ -135,7 +135,7 @@
             transition: background-color 0.15s ease;
         }
         .row-num:hover .row-resizer {
-            background-color: rgba(16, 124, 65, 0.35);
+            background-color: rgba(16, 124, 65, 0.45);
         }
         .row-resizer:hover, .row-resizer.active {
             background-color: #107c41 !important; /* Excel Signature Green */

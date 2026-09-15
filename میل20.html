@@ -58,16 +58,130 @@
         .spacer-part { flex: 3; background-color: red !important; color: black; text-align: center; font-weight: bold; font-size: 11px; border-right: 1px solid black; line-height: 38px; }
         .band-part { flex: 1; background-color: white; color: black; text-align: center; font-weight: bold; font-size: 11px; line-height: 38px; }
         
-        table.data-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000; table-layout: fixed; }
-        th { border: 1px solid #000; background-color: #bbb !important; padding: 2px; font-size: 10.5px; text-align: center; font-weight: 900; }
-        td { border: 1px solid #000; height: 38px; text-align: center; padding: 0; position: relative; } 
+        /* ڕێکخستنی خشتە و کانتێنەری خولانەوە بە شێوازی ئێکسل */
+        .table-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            position: relative;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+        }
+        .table-scroll-wrapper::-webkit-scrollbar { height: 9px; }
+        .table-scroll-wrapper::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 4px; }
+        .table-scroll-wrapper::-webkit-scrollbar-thumb { background: #107c41; border-radius: 4px; }
+        .table-scroll-wrapper::-webkit-scrollbar-thumb:hover { background: #0c592f; }
+
+        table.data-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000; table-layout: fixed; position: relative; }
+        th { 
+            border: 1px solid #000; 
+            background-color: #bbb !important; 
+            padding: 2px; 
+            font-size: 10.5px; 
+            text-align: center; 
+            font-weight: 900; 
+            position: relative; 
+            box-sizing: border-box;
+            user-select: none;
+        }
+        td { 
+            border: 1px solid #000; 
+            height: 38px; 
+            text-align: center; 
+            padding: 0; 
+            position: relative; 
+            box-sizing: border-box;
+        } 
         
         .bg-grey-input { background-color: rgba(200, 200, 200, 0.3) !important; }
-        .row-num { background-color: #ccc !important; font-weight: bold; font-size: 15px; }
+        .row-num { 
+            background-color: #ccc !important; 
+            font-weight: bold; 
+            font-size: 15px; 
+            position: relative;
+            user-select: none;
+        }
         .footer-total { border: 1.5px solid #000; font-size: 24px !important; font-weight: 900; height: 42px; }
+
+        /* ستایلەکانی دەستکاریکردنی قەبارە (Excel Resizers) */
+        .col-resizer {
+            position: absolute;
+            top: 0;
+            right: -3px;
+            width: 7px;
+            height: 100%;
+            cursor: col-resize;
+            user-select: none;
+            z-index: 50;
+            background: transparent;
+            transition: background-color 0.15s ease;
+        }
+        th:hover .col-resizer {
+            background-color: rgba(16, 124, 65, 0.35);
+        }
+        .col-resizer:hover, .col-resizer.active {
+            background-color: #107c41 !important; /* Excel Signature Green */
+        }
+
+        .row-resizer {
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100%;
+            height: 7px;
+            cursor: row-resize;
+            user-select: none;
+            z-index: 50;
+            background: transparent;
+            transition: background-color 0.15s ease;
+        }
+        .row-num:hover .row-resizer {
+            background-color: rgba(16, 124, 65, 0.35);
+        }
+        .row-resizer:hover, .row-resizer.active {
+            background-color: #107c41 !important; /* Excel Signature Green */
+        }
+
+        /* هێڵەکانی رێبەری کاتی ڕاکێشان (Guide Lines) */
+        #col-resize-guide {
+            position: absolute;
+            display: none;
+            top: 0;
+            width: 2px;
+            background-color: #107c41;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        #row-resize-guide {
+            position: absolute;
+            display: none;
+            left: 0;
+            height: 2px;
+            background-color: #107c41;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        /* باڵۆنی زانیاری قەبارە (Tooltip) */
+        #excel-resize-tooltip {
+            position: fixed;
+            display: none;
+            background: rgba(16, 124, 65, 0.95);
+            color: #ffffff;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            pointer-events: none;
+            z-index: 100000;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
  
-                                                        @media print { 
-            .controls-container, #excel-menu { display: none !important; } 
+        @media print { 
+            .controls-container, #excel-menu, .col-resizer, .row-resizer, #excel-resize-tooltip, #col-resize-guide, #row-resize-guide { display: none !important; } 
+            .table-scroll-wrapper { overflow: visible !important; width: 100% !important; margin: 0 !important; }
+            table.data-table { width: 100% !important; }
             @page { size: A4 landscape; margin: 3mm; } 
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .selected-cell { outline: none !important; background-color: transparent !important; }
@@ -202,7 +316,13 @@
     </div>
     </div><div class="menu-section"><span class="tool-label">Colors:</span><div class="color-grid">
         <div class="color-opt" style="background:#ffffff;" onclick="applyExcelStyle('backgroundColor', '#ffffff')"></div><div class="color-opt" style="background:#ffeb3b;" onclick="applyExcelStyle('backgroundColor', '#ffeb3b')"></div><div class="color-opt" style="background:#4caf50;" onclick="applyExcelStyle('backgroundColor', '#4caf50')"></div><div class="color-opt" style="background:#f44336;" onclick="applyExcelStyle('backgroundColor', '#f44336')"></div>
-    </div></div><button class="menu-btn" style="color:red;" onclick="applyExcelStyle('clearContent')">Clear Selection</button>
+    </div></div>
+    <div class="menu-section">
+        <span class="tool-label">قەبارەی خانەکان (Excel Size):</span>
+        <button class="menu-btn" style="font-size: 12px; padding: 4px; font-weight: normal; margin-bottom: 4px;" onclick="autoFitAllColumns()">📐 قەبارەی خۆکار (Auto)</button>
+        <button class="menu-btn" style="font-size: 12px; padding: 4px; font-weight: normal; color: #8e44ad;" onclick="resetTableSizes()">🔄 گەڕاندنەوەی قەبارە</button>
+    </div>
+    <button class="menu-btn" style="color:red;" onclick="applyExcelStyle('clearContent')">Clear Selection</button>
 </div>
  
 <div class="page-frame" id="printable-area">
@@ -236,32 +356,35 @@
         </table>
     </div>
  
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th style="width:100px;">الاعداد</th><th style="width:20px;">#</th><th style="width:60px;">FONK.</th>
-                <th style="width:50px;">العرض</th><th style="width:50px;">الارتفاع</th><th style="width:50px;">الاتجاة</th>
-                <th style="background:#81d4fa !important; width:50px;">عدد (Q)</th>
-                <th style="background:#f48fb1 !important; width:50px;">اعلى قصا</th><th style="background:#a5d6a7 !important; width:50px;">اسفل قصا</th>
-                <th style="background:#90caf9 !important; width:50px;">سبیسر اطراف</th><th style="background:#ffcc80 !important; width:50px;">اسفل</th>
-                <th style="width:40px;">عدد شفر</th>
-                <th style="width:50px;">قياس شفر</th><th style="width:70px;">متر مربع</th><th style="width:45px;">الزنجیر</th>
-            </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-        <tfoot>
-            <tr>
-                <td colspan="6" style="border:none;"></td>
-                <td class="footer-total" id="q-total">0</td>
-                <td colspan="6" style="border:none;"></td>
-                <td class="footer-total" id="grand-total">0.000</td>
-                <td style="border:none; text-align:left; padding-left:5px; font-weight:bold; font-size:18px;">m²</td>
-            </tr>
-        </tfoot>
-    </table>
+    <div class="table-scroll-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:100px;">الاعداد</th><th style="width:20px;">#</th><th style="width:60px;">FONK.</th>
+                    <th style="width:50px;">العرض</th><th style="width:50px;">الارتفاع</th><th style="width:50px;">الاتجاة</th>
+                    <th style="background:#81d4fa !important; width:50px;">عدد (Q)</th>
+                    <th style="background:#f48fb1 !important; width:50px;">اعلى قصا</th><th style="background:#a5d6a7 !important; width:50px;">اسفل قصا</th>
+                    <th style="background:#90caf9 !important; width:50px;">سبیسر اطراف</th><th style="background:#ffcc80 !important; width:50px;">اسفل</th>
+                    <th style="width:40px;">عدد شفر</th>
+                    <th style="width:50px;">قياس شفر</th><th style="width:70px;">متر مربع</th><th style="width:45px;">الزنجیر</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="6" style="border:none;"></td>
+                    <td class="footer-total" id="q-total">0</td>
+                    <td colspan="6" style="border:none;"></td>
+                    <td class="footer-total" id="grand-total">0.000</td>
+                    <td style="border:none; text-align:left; padding-left:5px; font-weight:bold; font-size:18px;">m²</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
  
     <div class="controls-container no-print">
         <button class="action-btn" style="background-color: #34495e;" onclick="window.location.href='Dashboard.html'">🏠 گەڕانەوە</button>
+        <button class="action-btn" style="background-color: #8e44ad;" onclick="resetTableSizes()" title="گەڕاندنەوەی قەبارەی سەرەتایی">🔄 قەبارەی سەرەتایی</button>
         <button class="action-btn" style="background-color: #27ae60;" onclick="window.print()">🖨️ Print A4</button>
         <button class="action-btn" style="background-color: #2980b9;" onclick="savePage()">💾 Save to 2026</button>
         <button class="action-btn" style="background-color: #e74c3c;" onclick="orderGlass()">🖼️ داواکردنی جام</button>
@@ -292,6 +415,9 @@
             <td class="bg-grey-input"><input class="chain-res" readonly tabindex="-1"></td>`;
         tbody.appendChild(tr);
     }
+
+    // دەستپێکردنی قەبارەی خانەکان هاوشێوەی مایکرۆسۆفت ئێکسل
+    initExcelResizing();
  
     let isSelecting = false;
     let selectedInputs = new Set();
@@ -518,6 +644,374 @@ function calculate(el) {
             localStorage.setItem('glass_orders_2026', JSON.stringify(allData));
             window.location.href = "جام میل20.html";
         } else alert("تکایە قیاسەکان پڕبکەرەوە!");
+    }
+
+    // --- دەستکاریکردنی قەبارەی خانەکان هاوشێوەی مایکرۆسۆفت ئێکسل (Excel Cell Resizing) ---
+    const STORAGE_KEY_COLS = 'mil20_excel_col_widths_v1';
+    const STORAGE_KEY_ROWS = 'mil20_excel_row_heights_v1';
+
+    let currentResizer = null;
+    let isColResizing = false;
+    let isRowResizing = false;
+    let startX = 0;
+    let startY = 0;
+    let startWidth = 0;
+    let startHeight = 0;
+    let targetTh = null;
+    let targetTr = null;
+    let targetColIdx = -1;
+
+    let resizeTooltip = null;
+    let colGuide = null;
+    let rowGuide = null;
+
+    function initExcelResizing() {
+        const dataTable = document.querySelector('table.data-table');
+        if (!dataTable) return;
+        const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+
+        // دروستکردنی باڵۆنی زانیاری ئەگەر نەبێت
+        if (!document.getElementById('excel-resize-tooltip')) {
+            resizeTooltip = document.createElement('div');
+            resizeTooltip.id = 'excel-resize-tooltip';
+            document.body.appendChild(resizeTooltip);
+        } else {
+            resizeTooltip = document.getElementById('excel-resize-tooltip');
+        }
+
+        // دروستکردنی هێڵی رێبەری ستوون
+        if (!document.getElementById('col-resize-guide')) {
+            colGuide = document.createElement('div');
+            colGuide.id = 'col-resize-guide';
+            tableWrapper.appendChild(colGuide);
+        } else {
+            colGuide = document.getElementById('col-resize-guide');
+        }
+
+        // دروستکردنی هێڵی رێبەری ڕیز
+        if (!document.getElementById('row-resize-guide')) {
+            rowGuide = document.createElement('div');
+            rowGuide.id = 'row-resize-guide';
+            tableWrapper.appendChild(rowGuide);
+        } else {
+            rowGuide = document.getElementById('row-resize-guide');
+        }
+
+        // خوێندنەوەی پێوانە پاشەکەوتکراوەکانی ستوون لە localStorage
+        let savedColWidths = {};
+        try {
+            savedColWidths = JSON.parse(localStorage.getItem(STORAGE_KEY_COLS) || '{}');
+        } catch (err) { savedColWidths = {}; }
+
+        const ths = dataTable.querySelectorAll('thead th');
+        ths.forEach((th, idx) => {
+            if (savedColWidths[idx]) {
+                th.style.width = savedColWidths[idx] + 'px';
+            }
+
+            // لکاندنی دەسکی ستوون (.col-resizer)
+            if (!th.querySelector('.col-resizer')) {
+                const resizer = document.createElement('div');
+                resizer.className = 'col-resizer';
+                resizer.title = 'ڕابکێشە بۆ گۆڕینی پانی ستوون (دوو کلیک بۆ قەبارەی خۆکار)';
+                th.appendChild(resizer);
+
+                resizer.addEventListener('mousedown', (e) => onColMouseDown(e, th, idx));
+                resizer.addEventListener('dblclick', (e) => onColDblClick(e, th, idx));
+            }
+        });
+
+        // خوێندنەوەی پێوانە پاشەکەوتکراوەکانی ڕیز لە localStorage
+        let savedRowHeights = {};
+        try {
+            savedRowHeights = JSON.parse(localStorage.getItem(STORAGE_KEY_ROWS) || '{}');
+        } catch (err) { savedRowHeights = {}; }
+
+        const rows = document.querySelectorAll('#table-body tr');
+        rows.forEach((tr, rIdx) => {
+            if (savedRowHeights[rIdx]) {
+                const h = savedRowHeights[rIdx] + 'px';
+                tr.style.height = h;
+                tr.querySelectorAll('td').forEach(td => td.style.height = h);
+            }
+
+            // لکاندنی دەسکی بەرزی ڕیز (.row-resizer) لەسەر خانەی ژمارەی ڕیز (#)
+            const rowNumCell = tr.querySelector('.row-num');
+            if (rowNumCell && !rowNumCell.querySelector('.row-resizer')) {
+                const resizer = document.createElement('div');
+                resizer.className = 'row-resizer';
+                resizer.title = 'ڕابکێشە بۆ گۆڕینی بەرزی ڕیز (دوو کلیک بۆ 38px)';
+                rowNumCell.appendChild(resizer);
+
+                resizer.addEventListener('mousedown', (e) => onRowMouseDown(e, tr, rIdx));
+                resizer.addEventListener('dblclick', (e) => onRowDblClick(e, tr, rIdx));
+            }
+        });
+
+        updateTableWidthFromThs();
+    }
+
+    function updateTableWidthFromThs() {
+        const dataTable = document.querySelector('table.data-table');
+        if (!dataTable) return;
+        const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+        const ths = dataTable.querySelectorAll('thead th');
+        let total = 0;
+        ths.forEach(th => {
+            const w = parseFloat(th.style.width) || th.getBoundingClientRect().width || 50;
+            total += w;
+        });
+        const containerWidth = tableWrapper.clientWidth;
+        if (total > containerWidth) {
+            dataTable.style.width = Math.round(total) + 'px';
+            dataTable.style.minWidth = Math.round(total) + 'px';
+        } else {
+            dataTable.style.width = '100%';
+            dataTable.style.minWidth = '100%';
+        }
+    }
+
+    function onColMouseDown(e, th, idx) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const dataTable = document.querySelector('table.data-table');
+        const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+        const allThs = dataTable.querySelectorAll('thead th');
+
+        // جێگیرکردنی پێوانەی هەموو ستوونەکان پێش دەستپێکردنی ڕاکێشان تا ستوونەکانی تر تێکنەچن
+        allThs.forEach(h => {
+            if (!h.style.width || h.style.width.endsWith('%')) {
+                h.style.width = Math.round(h.getBoundingClientRect().width) + 'px';
+            }
+        });
+
+        isColResizing = true;
+        currentResizer = e.target;
+        targetTh = th;
+        targetColIdx = idx;
+        startX = e.clientX;
+        startWidth = th.getBoundingClientRect().width;
+
+        currentResizer.classList.add('active');
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+
+        const wrapperRect = tableWrapper.getBoundingClientRect();
+        const thRect = th.getBoundingClientRect();
+        colGuide.style.height = dataTable.offsetHeight + 'px';
+        colGuide.style.top = (dataTable.offsetTop) + 'px';
+        colGuide.style.left = (thRect.right - wrapperRect.left + tableWrapper.scrollLeft) + 'px';
+        colGuide.style.display = 'block';
+
+        showResizeTooltip(e.clientX, e.clientY, `پانی: ${Math.round(startWidth)}px`);
+
+        window.addEventListener('mousemove', onColMouseMove);
+        window.addEventListener('mouseup', onColMouseUp);
+    }
+
+    function onColMouseMove(e) {
+        if (!isColResizing || !targetTh) return;
+        const diffX = e.clientX - startX;
+        const newWidth = Math.max(25, Math.round(startWidth + diffX));
+
+        targetTh.style.width = newWidth + 'px';
+
+        const dataTable = document.querySelector('table.data-table');
+        const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+        const wrapperRect = tableWrapper.getBoundingClientRect();
+        const thRect = targetTh.getBoundingClientRect();
+
+        colGuide.style.left = (thRect.right - wrapperRect.left + tableWrapper.scrollLeft) + 'px';
+        colGuide.style.height = dataTable.offsetHeight + 'px';
+
+        showResizeTooltip(e.clientX, e.clientY, `پانی: ${newWidth}px`);
+        updateTableWidthFromThs();
+    }
+
+    function onColMouseUp() {
+        if (!isColResizing) return;
+        isColResizing = false;
+        if (currentResizer) currentResizer.classList.remove('active');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        if (colGuide) colGuide.style.display = 'none';
+        hideResizeTooltip();
+
+        window.removeEventListener('mousemove', onColMouseMove);
+        window.removeEventListener('mouseup', onColMouseUp);
+
+        saveColWidths();
+    }
+
+    function saveColWidths() {
+        const dataTable = document.querySelector('table.data-table');
+        if (!dataTable) return;
+        const ths = dataTable.querySelectorAll('thead th');
+        const saved = {};
+        ths.forEach((th, idx) => {
+            saved[idx] = Math.round(th.getBoundingClientRect().width);
+        });
+        localStorage.setItem(STORAGE_KEY_COLS, JSON.stringify(saved));
+    }
+
+    function onColDblClick(e, th, idx) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const dataTable = document.querySelector('table.data-table');
+        let maxWidth = 45;
+        const thText = th.innerText.trim();
+        maxWidth = Math.max(maxWidth, thText.length * 10 + 24);
+
+        const rows = dataTable.querySelectorAll('#table-body tr');
+        rows.forEach(row => {
+            const cell = row.children[idx];
+            if (cell) {
+                const inp = cell.querySelector('input');
+                const val = (inp ? inp.value : cell.innerText) || '';
+                if (val.trim().length > 0) {
+                    maxWidth = Math.max(maxWidth, val.trim().length * 10 + 24);
+                }
+            }
+        });
+
+        th.style.width = Math.min(maxWidth, 280) + 'px';
+        updateTableWidthFromThs();
+        saveColWidths();
+    }
+
+    function onRowMouseDown(e, tr, rIdx) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const dataTable = document.querySelector('table.data-table');
+        const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+
+        isRowResizing = true;
+        currentResizer = e.target;
+        targetTr = tr;
+        startY = e.clientY;
+        startHeight = tr.getBoundingClientRect().height;
+
+        currentResizer.classList.add('active');
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
+
+        const wrapperRect = tableWrapper.getBoundingClientRect();
+        const trRect = tr.getBoundingClientRect();
+        rowGuide.style.width = dataTable.offsetWidth + 'px';
+        rowGuide.style.left = (dataTable.offsetLeft) + 'px';
+        rowGuide.style.top = (trRect.bottom - wrapperRect.top + tableWrapper.scrollTop) + 'px';
+        rowGuide.style.display = 'block';
+
+        showResizeTooltip(e.clientX, e.clientY, `بەرزی: ${Math.round(startHeight)}px`);
+
+        window.addEventListener('mousemove', onRowMouseMove);
+        window.addEventListener('mouseup', onRowMouseUp);
+    }
+
+    function onRowMouseMove(e) {
+        if (!isRowResizing || !targetTr) return;
+        const diffY = e.clientY - startY;
+        const newHeight = Math.max(26, Math.round(startHeight + diffY));
+
+        targetTr.style.height = newHeight + 'px';
+        targetTr.querySelectorAll('td').forEach(td => td.style.height = newHeight + 'px');
+
+        const dataTable = document.querySelector('table.data-table');
+        const tableWrapper = dataTable.closest('.table-scroll-wrapper') || dataTable.parentElement;
+        const wrapperRect = tableWrapper.getBoundingClientRect();
+        const trRect = targetTr.getBoundingClientRect();
+
+        rowGuide.style.top = (trRect.bottom - wrapperRect.top + tableWrapper.scrollTop) + 'px';
+        rowGuide.style.width = dataTable.offsetWidth + 'px';
+
+        showResizeTooltip(e.clientX, e.clientY, `بەرزی: ${newHeight}px`);
+    }
+
+    function onRowMouseUp() {
+        if (!isRowResizing) return;
+        isRowResizing = false;
+        if (currentResizer) currentResizer.classList.remove('active');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+        if (rowGuide) rowGuide.style.display = 'none';
+        hideResizeTooltip();
+
+        window.removeEventListener('mousemove', onRowMouseMove);
+        window.removeEventListener('mouseup', onRowMouseUp);
+
+        saveRowHeights();
+    }
+
+    function saveRowHeights() {
+        const rows = document.querySelectorAll('#table-body tr');
+        const saved = {};
+        rows.forEach((tr, rIdx) => {
+            saved[rIdx] = Math.round(tr.getBoundingClientRect().height);
+        });
+        localStorage.setItem(STORAGE_KEY_ROWS, JSON.stringify(saved));
+    }
+
+    function onRowDblClick(e, tr, rIdx) {
+        e.preventDefault();
+        e.stopPropagation();
+        tr.style.height = '38px';
+        tr.querySelectorAll('td').forEach(td => td.style.height = '38px');
+        saveRowHeights();
+    }
+
+    function showResizeTooltip(x, y, text) {
+        if (!resizeTooltip) return;
+        resizeTooltip.innerText = text;
+        resizeTooltip.style.left = (x + 14) + 'px';
+        resizeTooltip.style.top = (y + 14) + 'px';
+        resizeTooltip.style.display = 'block';
+    }
+
+    function hideResizeTooltip() {
+        if (resizeTooltip) resizeTooltip.style.display = 'none';
+    }
+
+    function resetTableSizes() {
+        if (!confirm("دڵنیایت دەتەوێت هەموو قەبارەی ستوون و ڕیزەکان بگەڕێنیتەوە بۆ باری سەرەتایی؟")) return;
+
+        localStorage.removeItem(STORAGE_KEY_COLS);
+        localStorage.removeItem(STORAGE_KEY_ROWS);
+
+        const dataTable = document.querySelector('table.data-table');
+        if (!dataTable) return;
+
+        const defaultWidths = [100, 20, 60, 50, 50, 50, 50, 50, 50, 50, 50, 40, 50, 70, 45];
+        const ths = dataTable.querySelectorAll('thead th');
+        ths.forEach((th, idx) => {
+            if (defaultWidths[idx]) {
+                th.style.width = defaultWidths[idx] + 'px';
+            } else {
+                th.style.width = '';
+            }
+        });
+
+        const rows = document.querySelectorAll('#table-body tr');
+        rows.forEach(tr => {
+            tr.style.height = '38px';
+            tr.querySelectorAll('td').forEach(td => td.style.height = '38px');
+        });
+
+        dataTable.style.width = '100%';
+        dataTable.style.minWidth = '100%';
+        hideMenu();
+    }
+
+    function autoFitAllColumns() {
+        const dataTable = document.querySelector('table.data-table');
+        if (!dataTable) return;
+        const ths = dataTable.querySelectorAll('thead th');
+        ths.forEach((th, idx) => {
+            onColDblClick({ preventDefault: ()=>{}, stopPropagation: ()=>{} }, th, idx);
+        });
+        hideMenu();
     }
 </script>
 </body>

@@ -17,8 +17,28 @@
         }
 
         .choice-btn {
-            width: 280px; padding: 20px; font-size: 18px; border: none; border-radius: 12px;
+            width: 320px; padding: 18px 22px; font-size: 17px; border: none; border-radius: 12px;
             cursor: pointer; color: white; font-weight: bold; transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .choice-btn:hover { transform: scale(1.03); filter: brightness(1.1); }
+
+        .smart-banner {
+            max-width: 210mm;
+            margin: 15px auto;
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .smart-banner.mode-double {
+            background: linear-gradient(135deg, #e67e22, #d35400);
         }
 
         .print-page {
@@ -34,6 +54,7 @@
 
         .page-header {
             width: 100%; display: flex; justify-content: space-between;
+            align-items: center;
             border: 2px solid #000; padding: 10px; margin-bottom: 10px;
             border-radius: 5px; font-size: 14px;
         }
@@ -110,10 +131,11 @@
         }
 
         .controls { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: none; gap: 10px; z-index: 1000; }
-        .btn { padding: 12px 25px; border-radius: 30px; cursor: pointer; border: none; color: white; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .btn { padding: 12px 25px; border-radius: 30px; cursor: pointer; border: none; color: white; font-weight: bold; box-shadow: 0 4px 12px rgba(0,0,0,0.2); transition: 0.2s; }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
         
         @media print {
-            .controls { display: none !important; }
+            .controls, .smart-banner { display: none !important; }
             body { background: white; }
             .print-page { margin: 0; border: none; }
         }
@@ -121,10 +143,22 @@
 </head>
 <body>
 
-<div id="selection-overlay">
-    <h2 style="color:white;">سیستەمی میل 16</h2>
-    <button class="choice-btn" style="background:#27ae60" onclick="startRendering(true)">✅ جامەکان وەک یەکن</button>
-    <button class="choice-btn" style="background:#e67e22" onclick="startRendering(false)">🔄 جامەکان جیاوازن (پەڕەی جیا)</button>
+<div id="selection-overlay" style="display: none;">
+    <h2 style="color:white; margin-bottom: 5px;">سیستەمی میل 16</h2>
+    <p id="selection-overlay-msg" style="color:#ecf0f1; font-size:15px; margin-top:0; max-width:420px; text-align:center; line-height: 1.6;"></p>
+    <button class="choice-btn" style="background:#27ae60" onclick="startRendering(true)">✅ جامەکان وەک یەکن (١ پەڕە)</button>
+    <button class="choice-btn" style="background:#e67e22" onclick="startRendering(false)">🔄 جامەکان جیاوازن (٢ پەڕەی جیا)</button>
+</div>
+
+<div id="smart-banner" class="smart-banner" style="display: none;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 22px;">🤖</span>
+        <span id="smart-banner-text">سیستەمی زیرەک</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+        <button onclick="toggleRenderingMode()" style="background: rgba(255,255,255,0.25); border: 1px solid white; color: white; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; transition: 0.2s;">🔄 گۆڕینی شێواز</button>
+        <button onclick="openSelectionOverlay()" style="background: rgba(0,0,0,0.25); border: none; color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: 0.2s;">هەڵبژاردنی دەستی</button>
+    </div>
 </div>
 
 <div id="pdf-area">
@@ -134,17 +168,153 @@
 <div class="controls" id="action-controls">
     <button class="btn" style="background:#25D366" onclick="generateAndSharePDF()">📤 ناردنی PDF</button>
     <button class="btn" style="background:#2c3e50" onclick="window.print()">🖨️ چاپکردن</button>
+    <button class="btn" id="toggle-mode-btn" style="background:#8e44ad;" onclick="toggleRenderingMode()">🔄 گۆڕینی شێواز</button>
     <a href="میل16.html" class="btn" style="background:#3498db; text-decoration:none;">🏠 گەڕانەوە</a>
 </div>
 
 <script>
-    function startRendering(isSame) {
-        document.getElementById('selection-overlay').style.display = 'none';
-        document.getElementById('action-controls').style.display = 'flex';
-        renderOrders(isSame);
+    let currentIsSame = true;
+    let currentAnalysis = null;
+
+    function hasGlassText(part) {
+        const cleaned = part.replace(/[\d\s\.\,\-\+\/\\mmملمcmسم]/gi, '').trim();
+        return cleaned.length > 0;
     }
 
-    function renderOrders(isSame) {
+    function analyzeGlassTypes(input) {
+        if (!input || !input.trim()) {
+            return { count: 0, types: [], mode: 'unknown', raw: '' };
+        }
+        const raw = input.trim();
+        const delimiterRegex = /\s*(?:[+/\\,*;،\n؛]|(?:\s+-\s+)|(?:\s+[و]\s+)|(?:\s+مع\s+)|(?:\s+لەگەڵ\s+))\s*/;
+        const parts = raw.split(delimiterRegex).map(s => s.trim()).filter(s => s.length > 0);
+
+        if (parts.length >= 2) {
+            const has0 = hasGlassText(parts[0]);
+            const has1 = hasGlassText(parts[1]);
+
+            if (has0 && has1) {
+                if (parts[0].toLowerCase() === parts[1].toLowerCase()) {
+                    return { count: 1, types: [parts[0]], mode: 'single', raw };
+                }
+                return { count: 2, types: [parts[0], parts[1]], mode: 'double', raw };
+            } else if (!has0 && !has1) {
+                if (parts[0] === parts[1]) {
+                    return { count: 1, types: [raw], mode: 'single', raw };
+                }
+                return { count: 2, types: [parts[0], parts[1]], mode: 'double', raw };
+            } else {
+                return { count: 1, types: [raw], mode: 'single', raw };
+            }
+        }
+
+        const glassKeywords = [
+            'شفاف', 'سوپەر کلیر', 'سوبر کلیر', 'کلیر',
+            'رصاصي', 'ڕەساسی', 'ڕەساسى', 'رصاصى', 'سەوز', 'اخضر', 'شین', 'ازرق',
+            'فامی', 'فامێ', 'فامى', 'عسلي', 'عسلى', 'هەنگوینی', 'برۆنز',
+            'سکلێت', 'سیکوریت', 'مرايا', 'ئاوێنە', 'مسنفر', 'ساندبلاست',
+            'اسود', 'ڕەش', 'قاوەیی', 'بني', 'مات'
+        ];
+
+        let found = [];
+        for (let kw of glassKeywords) {
+            if (raw.includes(kw)) {
+                let alreadyCovered = found.some(f => f.includes(kw));
+                if (!alreadyCovered) {
+                    found = found.filter(f => !kw.includes(f));
+                    found.push(kw);
+                }
+            }
+        }
+
+        if (found.length >= 2) {
+            return { count: 2, types: [found[0], found[1]], mode: 'double', raw };
+        }
+
+        return { count: 1, types: [raw], mode: 'single', raw };
+    }
+
+    function initPage() {
+        const rawData = localStorage.getItem('glass_orders_2026');
+        if (!rawData) {
+            alert("تکایە سەرەتا لە لاپەڕەی میل 16 قیاسەکان پڕبکەرەوە!");
+            window.location.href = "میل16.html";
+            return;
+        }
+
+        const rawType = localStorage.getItem('jam_glass_type') || '';
+        currentAnalysis = analyzeGlassTypes(rawType);
+
+        if (currentAnalysis.mode === 'single') {
+            // ناسینەوەی یەک جۆر: هەموویان لە یەک پەڕە
+            startRendering(true, currentAnalysis);
+            showSmartBanner(`سیستەمی زیرەک: یەک جۆری جام ناسرایەوە («${currentAnalysis.raw}») ⬅️ بە شێوازی یەک پەڕە داندرا.`, false);
+        } else if (currentAnalysis.mode === 'double') {
+            // ناسینەوەی دوو جۆر: دوو پەڕەی جیاواز
+            startRendering(false, currentAnalysis);
+            showSmartBanner(`سیستەمی زیرەک: دوو جۆری جام ناسرایەوە («${currentAnalysis.types[0]}» و «${currentAnalysis.types[1]}») ⬅️ لە دوو پەڕەی جیاواز داندرا.`, true);
+        } else {
+            // جۆری جام دیاری نەکراوە: پیشاندانی پەنجەرەی هەڵبژاردن
+            openSelectionOverlay("هیچ جۆرێکی جام لە خانەی 'نوع الجام' نەنووسراوە، تکایە شێوازی دڵخوازت هەڵبژێرە:");
+        }
+    }
+
+    function showSmartBanner(msg, isDouble) {
+        const banner = document.getElementById('smart-banner');
+        const text = document.getElementById('smart-banner-text');
+        if (!banner || !text) return;
+        text.textContent = msg;
+        if (isDouble) {
+            banner.classList.add('mode-double');
+        } else {
+            banner.classList.remove('mode-double');
+        }
+        banner.style.display = 'flex';
+    }
+
+    function openSelectionOverlay(msg) {
+        const overlay = document.getElementById('selection-overlay');
+        const overlayMsg = document.getElementById('selection-overlay-msg');
+        if (overlayMsg) overlayMsg.textContent = msg || '';
+        if (overlay) overlay.style.display = 'flex';
+    }
+
+    function toggleRenderingMode() {
+        startRendering(!currentIsSame, currentAnalysis);
+        if (currentIsSame) {
+            showSmartBanner(`شێواز گۆڕدرا بۆ: هەموویان وەک یەک لە یەک پەڕە.`, false);
+        } else {
+            showSmartBanner(`شێواز گۆڕدرا بۆ: دوو پەڕەی جیاواز (کوندار و سادە).`, true);
+        }
+    }
+
+    function updateToggleBtn() {
+        const btn = document.getElementById('toggle-mode-btn');
+        if (!btn) return;
+        if (currentIsSame) {
+            btn.innerHTML = "📑 گۆڕین بۆ ٢ پەڕە";
+            btn.style.background = "#e67e22";
+        } else {
+            btn.innerHTML = "📄 گۆڕین بۆ ١ پەڕە";
+            btn.style.background = "#27ae60";
+        }
+    }
+
+    function startRendering(isSame, analysis) {
+        document.getElementById('selection-overlay').style.display = 'none';
+        document.getElementById('action-controls').style.display = 'flex';
+        currentIsSame = isSame;
+        if (analysis) {
+            currentAnalysis = analysis;
+        } else if (!currentAnalysis) {
+            const rawType = localStorage.getItem('jam_glass_type') || '';
+            currentAnalysis = analyzeGlassTypes(rawType);
+        }
+        updateToggleBtn();
+        renderOrders(isSame, currentAnalysis);
+    }
+
+    function renderOrders(isSame, analysis) {
         const rawData = localStorage.getItem('glass_orders_2026');
         const company = localStorage.getItem('jam_company_name') || "---";
         const customer = localStorage.getItem('jam_customer_name') || "---";
@@ -154,24 +324,31 @@
         const container = document.getElementById('container');
         container.innerHTML = '';
 
+        const type1 = (analysis && analysis.types && analysis.types[0]) ? analysis.types[0] : "";
+        const type2 = (analysis && analysis.types && analysis.types[1]) ? analysis.types[1] : "";
+
         if (isSame) {
             let itemsToRender = [];
             data.forEach(d => { 
                 itemsToRender.push({...d, h_type: true}); 
                 itemsToRender.push({...d, h_type: false}); 
             });
-            createPages(itemsToRender, company, customer);
+            const label = type1 || (analysis ? analysis.raw : "") || "";
+            createPages(itemsToRender, company, customer, label);
         } else {
             // جیاکردنەوەی پەرەکان: سەرەتا کوندارەکان، پاشان سادەکان
             let kundarItems = data.map(d => ({...d, h_type: true}));
             let sadaItems = data.map(d => ({...d, h_type: false}));
             
-            createPages(kundarItems, company, customer);
-            createPages(sadaItems, company, customer);
+            const label1 = type1 ? `${type1} (کوندار)` : "جام کوندار";
+            const label2 = type2 ? `${type2} (سادە)` : (type1 ? `${type1} (سادە)` : "جام سادە");
+
+            createPages(kundarItems, company, customer, label1);
+            createPages(sadaItems, company, customer, label2);
         }
     }
 
-    function createPages(items, company, customer) {
+    function createPages(items, company, customer, glassLabel) {
         const container = document.getElementById('container');
         for (let i = 0; i < items.length; i += 8) {
             const page = document.createElement('div');
@@ -180,6 +357,7 @@
                 <div class="page-header">
                     <div>کۆمپانیا: <b>${company}</b></div>
                     <div>موشتەری: <b>${customer}</b></div>
+                    ${glassLabel ? `<div>نوع الجام: <b style="color: #c0392b;">${glassLabel}</b></div>` : ''}
                     <div style="color: red;">قیاس: <b>ملم</b></div>
                     <div>بەروار: ${new Date().toLocaleDateString('ku-IQ')}</div>
                 </div>
@@ -254,6 +432,8 @@
             holeButtons.forEach(button => button.style.display = '');
         }
     }
+
+    window.addEventListener('DOMContentLoaded', initPage);
 </script>
 </body>
 </html>

@@ -146,6 +146,12 @@
 <div id="selection-overlay" style="display: none;">
     <h2 style="color:white; margin-bottom: 5px;">سیستەمی میل 16</h2>
     <p id="selection-overlay-msg" style="color:#ecf0f1; font-size:15px; margin-top:0; max-width:420px; text-align:center; line-height: 1.6;"></p>
+    
+    <div style="display: flex; gap: 8px; margin: 8px 0 15px 0; width: 340px;">
+        <input type="text" id="manual_glass_input" placeholder="یان لێرە جۆری جام بنووسە (وەک: 6ملم شفاف)" onkeydown="if(event.key==='Enter') applyManualGlassType()" style="flex: 1; padding: 10px 12px; border-radius: 8px; border: 2px solid #3498db; background: white; text-align: center; font-weight: bold; font-size: 14px; outline: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+        <button type="button" onclick="applyManualGlassType()" style="background: #3498db; color: white; border: none; border-radius: 8px; padding: 0 16px; font-weight: bold; font-size: 14px; cursor: pointer; transition: 0.2s;">پشکنین</button>
+    </div>
+
     <button class="choice-btn" style="background:#27ae60" onclick="startRendering(true)">✅ جامەکان وەک یەکن (١ پەڕە)</button>
     <button class="choice-btn" style="background:#e67e22" onclick="startRendering(false)">🔄 جامەکان جیاوازن (٢ پەڕەی جیا)</button>
 </div>
@@ -234,6 +240,51 @@
         return { count: 1, types: [raw], mode: 'single', raw };
     }
 
+    function getStoredGlassType() {
+        // 1. URL parameter (بەرگری دەکات لە کێشەی نەبوونی ڕیفرێش و کاش)
+        try {
+            const urlParams = new URLSearchParams(window.location.search);
+            const gUrl = urlParams.get('glass');
+            if (gUrl && gUrl.trim()) {
+                localStorage.setItem('jam_glass_type', gUrl.trim());
+                return gUrl.trim();
+            }
+        } catch(e) {}
+
+        // 2. پاشەکەوتی jam_glass_type لە localStorage
+        const gLocal = localStorage.getItem('jam_glass_type');
+        if (gLocal && gLocal.trim()) {
+            return gLocal.trim();
+        }
+
+        // 3. پاشەکەوتی 2026_data وەک یەدەگ
+        try {
+            const d = JSON.parse(localStorage.getItem('2026_data') || '{}');
+            if (d && d.glass_type && d.glass_type.trim()) {
+                localStorage.setItem('jam_glass_type', d.glass_type.trim());
+                return d.glass_type.trim();
+            }
+        } catch(e) {}
+
+        return '';
+    }
+
+    function applyManualGlassType() {
+        const input = document.getElementById('manual_glass_input');
+        if (!input || !input.value.trim()) return;
+        const val = input.value.trim();
+        localStorage.setItem('jam_glass_type', val);
+        currentAnalysis = analyzeGlassTypes(val);
+
+        if (currentAnalysis.mode === 'single') {
+            startRendering(true, currentAnalysis);
+            showSmartBanner(`سیستەمی زیرەک: یەک جۆری جام ناسرایەوە («${currentAnalysis.raw}») ⬅️ بە شێوازی یەک پەڕە داندرا.`, false);
+        } else {
+            startRendering(false, currentAnalysis);
+            showSmartBanner(`سیستەمی زیرەک: دوو جۆری جام ناسرایەوە («${currentAnalysis.types[0]}» و «${currentAnalysis.types[1]}») ⬅️ لە دوو پەڕەی جیاواز داندرا.`, true);
+        }
+    }
+
     function initPage() {
         const rawData = localStorage.getItem('glass_orders_2026');
         if (!rawData) {
@@ -242,7 +293,7 @@
             return;
         }
 
-        const rawType = localStorage.getItem('jam_glass_type') || '';
+        const rawType = getStoredGlassType();
         currentAnalysis = analyzeGlassTypes(rawType);
 
         if (currentAnalysis.mode === 'single') {
@@ -255,7 +306,7 @@
             showSmartBanner(`سیستەمی زیرەک: دوو جۆری جام ناسرایەوە («${currentAnalysis.types[0]}» و «${currentAnalysis.types[1]}») ⬅️ لە دوو پەڕەی جیاواز داندرا.`, true);
         } else {
             // جۆری جام دیاری نەکراوە: پیشاندانی پەنجەرەی هەڵبژاردن
-            openSelectionOverlay("هیچ جۆرێکی جام لە خانەی 'نوع الجام' نەنووسراوە، تکایە شێوازی دڵخوازت هەڵبژێرە:");
+            openSelectionOverlay("هیچ جۆرێکی جام لە خانەی 'نوع الجام' نەنووسراوە، تکایە شێوازی دڵخوازت هەڵبژێرە یان لە خوارەوە بینوسە:");
         }
     }
 

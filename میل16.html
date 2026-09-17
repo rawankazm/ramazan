@@ -203,7 +203,15 @@
             <tr><td><input type="text" id="color_val"></td><td class="label-cell">اللون</td></tr>
             <tr><td><input type="text" value="میل" class="system-input" ></td><td class="label-cell">سیستم</td></tr>
             <tr><td style="padding:0;"><div style="display:flex; width:100%;"><div class="spacer-part" style="background-color:white !important;">سبیسر16</div><div class="band-part">باند ازرق</div></div></td><td class="label-cell">سبیسر/باند</td></tr>
-            <tr><td><input type="text" id="glass_type"></td><td class="label-cell">نوع الجام</td></tr>
+            <tr>
+                <td style="position: relative; padding: 0;">
+                    <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; position: relative;">
+                        <input type="text" id="glass_type" placeholder="" oninput="detectGlassTypeUI()">
+                        <span id="glass_type_badge" class="no-print" style="position: absolute; left: 5px; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; display: none; pointer-events: none; z-index: 5;"></span>
+                    </div>
+                </td>
+                <td class="label-cell">نوع الجام</td>
+            </tr>
         </table>
         <table class="right-side-table">
             <tr><td colspan="2" class="not-cell">NOT</td></tr>
@@ -394,22 +402,110 @@
         hideMenu();
     }
 
-            function hideMenu() { if(document.getElementById('excel-menu')) document.getElementById('excel-menu').style.display = 'none'; }
-function orderGlass() {
+    function hideMenu() { if(document.getElementById('excel-menu')) document.getElementById('excel-menu').style.display = 'none'; }
+
+    function hasGlassText(part) {
+        const cleaned = part.replace(/[\d\s\.\,\-\+\/\\mmملمcmسم]/gi, '').trim();
+        return cleaned.length > 0;
+    }
+
+    function analyzeGlassTypes(input) {
+        if (!input || !input.trim()) {
+            return { count: 0, types: [], mode: 'unknown', raw: '' };
+        }
+        const raw = input.trim();
+        const delimiterRegex = /\s*(?:[+/\\,*;،\n؛]|(?:\s+-\s+)|(?:\s+[و]\s+)|(?:\s+مع\s+)|(?:\s+لەگەڵ\s+))\s*/;
+        const parts = raw.split(delimiterRegex).map(s => s.trim()).filter(s => s.length > 0);
+
+        if (parts.length >= 2) {
+            const has0 = hasGlassText(parts[0]);
+            const has1 = hasGlassText(parts[1]);
+
+            if (has0 && has1) {
+                if (parts[0].toLowerCase() === parts[1].toLowerCase()) {
+                    return { count: 1, types: [parts[0]], mode: 'single', raw };
+                }
+                return { count: 2, types: [parts[0], parts[1]], mode: 'double', raw };
+            } else if (!has0 && !has1) {
+                if (parts[0] === parts[1]) {
+                    return { count: 1, types: [raw], mode: 'single', raw };
+                }
+                return { count: 2, types: [parts[0], parts[1]], mode: 'double', raw };
+            } else {
+                return { count: 1, types: [raw], mode: 'single', raw };
+            }
+        }
+
+        const glassKeywords = [
+            'شفاف', 'سوپەر کلیر', 'سوبر کلیر', 'کلیر',
+            'رصاصي', 'ڕەساسی', 'ڕەساسى', 'رصاصى', 'سەوز', 'اخضر', 'شین', 'ازرق',
+            'فامی', 'فامێ', 'فامى', 'عسلي', 'عسلى', 'هەنگوینی', 'برۆنز',
+            'سکلێت', 'سیکوریت', 'مرايا', 'ئاوێنە', 'مسنفر', 'ساندبلاست',
+            'اسود', 'ڕەش', 'قاوەیی', 'بني', 'مات'
+        ];
+
+        let found = [];
+        for (let kw of glassKeywords) {
+            if (raw.includes(kw)) {
+                let alreadyCovered = found.some(f => f.includes(kw));
+                if (!alreadyCovered) {
+                    found = found.filter(f => !kw.includes(f));
+                    found.push(kw);
+                }
+            }
+        }
+
+        if (found.length >= 2) {
+            return { count: 2, types: [found[0], found[1]], mode: 'double', raw };
+        }
+
+        return { count: 1, types: [raw], mode: 'single', raw };
+    }
+
+    function detectGlassTypeUI() {
+        const input = document.getElementById('glass_type');
+        const badge = document.getElementById('glass_type_badge');
+        if (!input || !badge) return;
+        const analysis = analyzeGlassTypes(input.value);
+
+        if (analysis.mode === 'single') {
+            badge.style.display = 'inline-block';
+            badge.style.background = '#e8f8f5';
+            badge.style.color = '#27ae60';
+            badge.style.border = '1px solid #27ae60';
+            badge.textContent = '١ پەڕە 📄';
+        } else if (analysis.mode === 'double') {
+            badge.style.display = 'inline-block';
+            badge.style.background = '#fef5e7';
+            badge.style.color = '#d35400';
+            badge.style.border = '1px solid #e67e22';
+            badge.textContent = '٢ پەڕە 📑';
+        } else {
+            badge.style.display = 'none';
+        }
+    }
+
+    function orderGlass() {
         let allData = [];
         const company = document.getElementById("company_name").value || "نەزانراو";
         const owner = document.getElementById("owner_name").value || "نەزانراو";
+        const glassType = document.getElementById("glass_type").value.trim();
+
         document.querySelectorAll('#table-body tr').forEach((row, index) => {
             const w = row.querySelector('.w-in').value, h = row.querySelector('.h-in').value, q = row.querySelector('.q-in').value || 1;
             if (w > 0 && h > 0) allData.push({ w, h, q, num: index + 1 });
         });
+
         if (allData.length > 0) {
             localStorage.setItem('jam_company_name', company);
             localStorage.setItem('jam_customer_name', owner);
+            localStorage.setItem('jam_glass_type', glassType);
             localStorage.setItem('glass_orders_2026', JSON.stringify(allData));
             window.location.href = "جام میل16.html";
         } else alert("تکایە سەرەتا قیاسەکان داخل بکە!");
     }
+
+    window.addEventListener('DOMContentLoaded', detectGlassTypeUI);
 </script>
 </body>
 </html>

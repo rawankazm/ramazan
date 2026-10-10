@@ -50,9 +50,13 @@
         .header-yellow { background-color: #ffff00 !important; color: black !important; }
         .footer-row { background-color: #333 !important; color: white !important; font-weight: bold; }
         .footer-row td { padding: 10px 15px !important; text-align: center !important; vertical-align: middle !important; }
-        .table-body td:nth-child(6) { background-color: #fff1e6; }
-        .table-body td:nth-child(7) { background-color: #edf7e9; }
-        .table-body td:nth-child(9) { background-color: #fdeaea; }
+        .table-body td:nth-child(6),
+        .table-body td:nth-child(6) input { background-color: #fff1e6 !important; }
+        .table-body td:nth-child(7),
+        .table-body td:nth-child(7) input { background-color: #edf7e9 !important; }
+        .table-body td:nth-child(9),
+        .table-body td:nth-child(9) input { background-color: #fdeaea !important; }
+        .footer-row .gcount { background-color: #704b22; }
         .footer-row .gm2 { background-color: #355b3d; }
         .footer-row .gtot { background-color: #7a3030; }
         tr.selected-row td { background-color: #d1e7ff !important; }
@@ -191,7 +195,8 @@
                     <tbody class="table-body"></tbody>
                     <tfoot>
                         <tr class="footer-row">
-                            <td colspan="6" style="padding:15px; text-align:center;">کۆیی گشتی</td>
+                            <td colspan="5" style="padding:15px; text-align:center;">کۆیی گشتی</td>
+                            <td class="gcount">0</td>
                             <td class="gm2">0.00</td>
                             <td></td>
                             <td class="gtot">0</td>
@@ -242,7 +247,7 @@
                 <td><input type="text"></td>
                 <td><input type="text" value="${getDefaultDateString(m)}"></td>
                 <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
-                <td><input type="number"></td>
+                <td><input type="number" class="count-in" oninput="updateTotals()"></td>
                 <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>
                 <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
                 <td><input type="text" class="tot-in" readonly style="color:red; font-weight:bold;"></td>
@@ -287,7 +292,7 @@
                     <td><input type="text" value="${data.owner || ''}"></td>
                     <td><input type="text" value="${dateStr}"></td>
                     <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
-                    <td><input type="number" value="${data.q_total || ''}"></td>
+                    <td><input type="number" class="count-in" oninput="updateTotals()" value="${data.q_total || ''}"></td>
                     <td><input type="number" class="m2-in" oninput="calcT1(this)" value="${data.m2_total || ''}"></td>
                     <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
                     <td><input type="text" class="tot-in" readonly style="color:red; font-weight:bold;"></td>
@@ -776,14 +781,16 @@
         function updateTotals() {
             const t = document.querySelector('.active-table');
             if(!t) return;
-            let m2=0, tot=0;
+            let count=0, m2=0, tot=0;
             t.querySelectorAll('.table-body tr').forEach(r => {
                 if(r.style.display !== 'none') {
+                    count += parseFloat(r.querySelector('.count-in').value) || 0;
                     m2 += parseFloat(r.querySelector('.m2-in').value) || 0;
                     const totVal = r.querySelector('.tot-in') ? r.querySelector('.tot-in').value : 0;
                     tot += parseFloat(totVal) || 0;
                 }
             });
+            t.querySelector('.gcount').innerText = count;
             t.querySelector('.gm2').innerText = m2.toFixed(2);
             t.querySelector('.gtot').innerText = tot;
         }

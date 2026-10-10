@@ -22,6 +22,7 @@
         body.driver-view .header-yellow:nth-child(8),
         body.driver-view .pr-in, 
         body.driver-view .tot-in,
+        body.driver-view .gtot,
         body.driver-view .pdf-btn-nav,
         body.driver-view .archive-btn-nav,
         body.driver-view .add-btn { display: none !important; }
@@ -187,7 +188,7 @@
                             <td colspan="6" style="padding:15px; text-align:center;">کۆیی گشتی</td>
                             <td class="gm2">0.00</td>
                             <td></td>
-                            <td></td>
+                            <td class="gtot">0</td>
                             <td colspan="7"></td>
                         </tr>
                     </tfoot>`;
@@ -769,13 +770,16 @@
         function updateTotals() {
             const t = document.querySelector('.active-table');
             if(!t) return;
-            let m2=0;
+            let m2=0, tot=0;
             t.querySelectorAll('.table-body tr').forEach(r => {
                 if(r.style.display !== 'none') {
                     m2 += parseFloat(r.querySelector('.m2-in').value) || 0;
+                    const totVal = r.querySelector('.tot-in') ? r.querySelector('.tot-in').value : 0;
+                    tot += parseFloat(totVal) || 0;
                 }
             });
             t.querySelector('.gm2').innerText = m2.toFixed(2);
+            t.querySelector('.gtot').innerText = tot;
         }
 
         function switchMonth(m, btn) {

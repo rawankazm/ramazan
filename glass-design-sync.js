@@ -188,7 +188,9 @@
         if (!container) return;
 
         const undoButton = document.querySelector('.design-undo-button');
+        const redoButton = document.querySelector('.design-redo-button');
         const undoHistory = [];
+        const redoHistory = [];
         let previousState = null;
         const getDesignState = () => ({
             notes: Array.from(container.querySelectorAll('.footer-input'), input => input.value),
@@ -197,7 +199,11 @@
         const updateUndoButton = () => {
             if (undoButton) {
                 undoButton.disabled = undoHistory.length === 0;
-                undoButton.style.backgroundColor = undoButton.disabled ? '#7f8c8d' : '#e67e22';
+                undoButton.style.opacity = undoButton.disabled ? '0.45' : '1';
+            }
+            if (redoButton) {
+                redoButton.disabled = redoHistory.length === 0;
+                redoButton.style.opacity = redoButton.disabled ? '0.45' : '1';
             }
         };
         const recordDesignChange = () => {
@@ -208,11 +214,11 @@
             }
             if (JSON.stringify(currentState) === JSON.stringify(previousState)) return;
             undoHistory.push(previousState);
+            redoHistory.length = 0;
             previousState = currentState;
             updateUndoButton();
         };
-        const undoDesignChange = () => {
-            const state = undoHistory.pop();
+        const applyDesignState = state => {
             if (!state) return;
 
             const notes = container.querySelectorAll('.footer-input');
@@ -234,11 +240,22 @@
             updateUndoButton();
             scheduleDesignCapture();
         };
+        const undoDesignChange = () => {
+            if (!undoHistory.length) return;
+            redoHistory.push(getDesignState());
+            applyDesignState(undoHistory.pop());
+        };
+        const redoDesignChange = () => {
+            if (!redoHistory.length) return;
+            undoHistory.push(getDesignState());
+            applyDesignState(redoHistory.pop());
+        };
 
         const observer = new MutationObserver(records => {
             scheduleDesignCapture();
             if (records.some(record => record.type === 'childList')) {
                 undoHistory.length = 0;
+                redoHistory.length = 0;
                 previousState = getDesignState();
                 updateUndoButton();
             }
@@ -263,6 +280,9 @@
             }
         });
         if (undoButton) undoButton.addEventListener('click', undoDesignChange);
+        if (redoButton) redoButton.addEventListener('click', redoDesignChange);
+        const refreshButton = document.querySelector('.design-refresh-button');
+        if (refreshButton) refreshButton.addEventListener('click', () => window.location.reload());
     }
 
     if (document.readyState === 'loading') {

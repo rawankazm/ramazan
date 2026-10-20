@@ -1,8 +1,10 @@
 (function () {
     const ORDER_CONTEXT_KEY = 'glass_design_order_context_2026';
     const PENDING_DESIGNS_KEY = 'glass_design_pending_2026';
+    const ORDER_DRAFT_PREFIX = 'glass_order_draft_2026:';
     let captureTimer = null;
     let captureFailureAlerted = false;
+    let draftFailureAlerted = false;
 
     function readInputValue(id) {
         const input = document.getElementById(id);
@@ -27,6 +29,100 @@
         localStorage.setItem(ORDER_CONTEXT_KEY, JSON.stringify(context));
         return context;
     };
+
+    function initializeOrderDraftPersistence() {
+        const tableBody = document.getElementById('table-body');
+        if (!tableBody || !document.getElementById('company_name')) return;
+
+        const pageName = decodeURIComponent(window.location.pathname.split('/').pop() || 'order');
+        const storageKey = `${ORDER_DRAFT_PREFIX}${pageName}`;
+        const getFields = () => Array.from(document.querySelectorAll('input, textarea, select'));
+        const getFieldKey = (field, index) => `${field.tagName}:${field.id || field.name || index}`;
+        const reportDraftFailure = (message, error) => {
+            console.error(message, error);
+            if (!draftFailureAlerted) {
+                draftFailureAlerted = true;
+                alert('داتاکانی فۆڕمی داواکاری نەتوانرا خۆکارانە خەزن یان بگەڕێندرێنەوە.');
+            }
+        };
+        const saveDraft = () => {
+            const fields = getFields();
+            const draft = {
+                fields: fields.map((field, index) => ({
+                    key: getFieldKey(field, index),
+                    type: field.type || '',
+                    value: field.value,
+                    checked: field.checked
+                })),
+                totals: {
+                    quantity: document.getElementById('q-total')?.textContent ?? '',
+                    area: document.getElementById('grand-total')?.textContent ?? ''
+                }
+            };
+
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(draft));
+            } catch (error) {
+                reportDraftFailure('Glass order draft could not be saved.', error);
+            }
+        };
+
+        try {
+            const savedDraft = localStorage.getItem(storageKey);
+            if (savedDraft) {
+                const draft = JSON.parse(savedDraft);
+                const fields = getFields();
+                const canRestore = Array.isArray(draft.fields)
+                    && draft.fields.length === fields.length
+                    && draft.fields.every((saved, index) =>
+                        saved.key === getFieldKey(fields[index], index)
+                        && saved.type === (fields[index].type || '')
+                    );
+
+                if (!canRestore) {
+                    throw new Error('Saved glass order draft does not match the current form.');
+                }
+
+                draft.fields.forEach((saved, index) => {
+                    const field = fields[index];
+                    field.value = saved.value;
+                    if (typeof saved.checked === 'boolean') field.checked = saved.checked;
+                });
+                const quantityTotal = document.getElementById('q-total');
+                const areaTotal = document.getElementById('grand-total');
+                if (quantityTotal && draft.totals) quantityTotal.textContent = draft.totals.quantity;
+                if (areaTotal && draft.totals) areaTotal.textContent = draft.totals.area;
+            }
+        } catch (error) {
+            reportDraftFailure('Glass order draft could not be restored.', error);
+        }
+
+        document.addEventListener('input', saveDraft);
+        document.addEventListener('change', saveDraft);
+
+        const clearDraft = () => {
+            try {
+                localStorage.removeItem(storageKey);
+            } catch (error) {
+                reportDraftFailure('Glass order draft could not be cleared.', error);
+            }
+        };
+        const savePage = window.savePage;
+        if (typeof savePage === 'function') {
+            window.savePage = function (...args) {
+                const result = savePage.apply(this, args);
+                clearDraft();
+                return result;
+            };
+        }
+
+        document.addEventListener('click', event => {
+            if (event.target instanceof Element
+                && event.target.closest('a[href*="Dashboard.html"], button[onclick*="Dashboard.html"]')) {
+                clearDraft();
+            }
+        });
+    }
 
     function scheduleDesignCapture() {
         if (captureTimer) clearTimeout(captureTimer);
@@ -91,7 +187,62 @@
         const container = document.getElementById('container');
         if (!container) return;
 
-        const observer = new MutationObserver(scheduleDesignCapture);
+        const undoButton = document.querySelector('.design-undo-button');
+        const undoHistory = [];
+        let previousState = null;
+        const getDesignState = () => ({
+            notes: Array.from(container.querySelectorAll('.footer-input'), input => input.value),
+            drawings: Array.from(container.querySelectorAll('.glass-draw'), drawing => drawing.className)
+        });
+        const updateUndoButton = () => {
+            if (undoButton) {
+                undoButton.disabled = undoHistory.length === 0;
+                undoButton.style.backgroundColor = undoButton.disabled ? '#7f8c8d' : '#e67e22';
+            }
+        };
+        const recordDesignChange = () => {
+            const currentState = getDesignState();
+            if (!previousState) {
+                previousState = currentState;
+                return;
+            }
+            if (JSON.stringify(currentState) === JSON.stringify(previousState)) return;
+            undoHistory.push(previousState);
+            previousState = currentState;
+            updateUndoButton();
+        };
+        const undoDesignChange = () => {
+            const state = undoHistory.pop();
+            if (!state) return;
+
+            const notes = container.querySelectorAll('.footer-input');
+            const drawings = container.querySelectorAll('.glass-draw');
+            if (notes.length !== state.notes.length || drawings.length !== state.drawings.length) {
+                undoHistory.length = 0;
+                previousState = getDesignState();
+                updateUndoButton();
+                return;
+            }
+
+            notes.forEach((input, index) => { input.value = state.notes[index]; });
+            drawings.forEach((drawing, index) => { drawing.className = state.drawings[index]; });
+            container.querySelectorAll('.hole-toggle').forEach(button => {
+                const drawing = button.previousElementSibling;
+                button.textContent = drawing.classList.contains('hole-left') ? 'کون: چەپ' : 'کون: ڕاست';
+            });
+            previousState = getDesignState();
+            updateUndoButton();
+            scheduleDesignCapture();
+        };
+
+        const observer = new MutationObserver(records => {
+            scheduleDesignCapture();
+            if (records.some(record => record.type === 'childList')) {
+                undoHistory.length = 0;
+                previousState = getDesignState();
+                updateUndoButton();
+            }
+        });
         observer.observe(container, {
             childList: true,
             subtree: true,
@@ -99,16 +250,26 @@
             attributeFilter: ['class']
         });
         document.addEventListener('input', event => {
-            if (event.target.classList.contains('footer-input')) scheduleDesignCapture();
+            if (event.target instanceof Element && event.target.matches('.footer-input')) {
+                recordDesignChange();
+                scheduleDesignCapture();
+            }
         });
         document.addEventListener('click', event => {
-            if (event.target.closest('.hole-toggle')) scheduleDesignCapture();
+            if (!(event.target instanceof Element)) return;
+            if (event.target.closest('.hole-toggle')) {
+                recordDesignChange();
+                scheduleDesignCapture();
+            }
         });
+        if (undoButton) undoButton.addEventListener('click', undoDesignChange);
     }
 
     if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeOrderDraftPersistence, { once: true });
         document.addEventListener('DOMContentLoaded', initializeDesignCapture, { once: true });
     } else {
+        initializeOrderDraftPersistence();
         initializeDesignCapture();
     }
 })();

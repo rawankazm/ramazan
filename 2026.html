@@ -92,6 +92,7 @@
             white-space: nowrap;
         }
         .add-btn { background:#28a745; color:white; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:bold; transition: 0.3s; }
+        .back-order-btn { background:#3498db; border-radius:25px; min-height:45px; box-shadow:0 4px 10px rgba(52,152,219,.25); }
 
         /* sync panel styles removed per revert request */
     </style>
@@ -123,7 +124,7 @@
                     <a id="mobile-link" class="add-btn" href="?mobile=1" style="background:#17a2b8;">📱 Mobile</a>
                 </div>
                 <button class="add-btn" onclick="addNewRow()">➕ <span data-i18n="btn_add">زیادکردنی ڕیز</span></button>
-                <button class="add-btn" style="background:#6c757d;" onclick="window.location.href='Dashboard.html'">⬅️ <span data-i18n="btn_back">گەڕانەوە</span></button>
+                <button class="add-btn back-order-btn" onclick="window.location.href='Dashboard.html'"><span data-i18n="btn_back">گەڕانەوە بۆ داواکاری</span> ⬅️</button>
                 <button class="add-btn" style="background:#007bff;" onclick="exportToExcel()">💾 <span data-i18n="btn_export">سەیڤکردن (Excel)</span></button>
                 <button class="add-btn sync-save-btn" style="background:#28a745;" onclick="triggerManualSave()">💾 <span data-i18n="btn_save">سەیڤکردن (مۆبایل و ئایپاد)</span></button>
                 <button class="add-btn driver-btn" onclick="toggleDriverMode()">🚚 <span data-i18n="btn_driver">تایبەت بە سایەق</span></button>
@@ -1191,19 +1192,19 @@
         ];
         const i18n = {
             ku: {
-                btn_pdf: 'دابەزاندن بە PDF', btn_archive: 'ئەڕشیڤی ساڵانە', btn_add: 'زیادکردنی ڕیز', btn_back: 'گەڕانەوە', btn_export: 'ڕاکێشان (Excel)', btn_driver: 'تەنها بۆ سایەق', btn_finalize: 'تەواوکردن',
+                btn_pdf: 'دابەزاندن بە PDF', btn_archive: 'ئەڕشیڤی ساڵانە', btn_add: 'زیادکردنی ڕیز', btn_back: 'گەڕانەوە بۆ داواکاری', btn_export: 'ڕاکێشان (Excel)', btn_driver: 'تەنها بۆ سایەق', btn_finalize: 'تەواوکردن',
                 search_placeholder: '🔍 گەڕان...', th_index:'#', th_company:'ناوی کۆمپانیا', th_owner:'خاوەنی داواکاری', th_date:'بەروار', th_ready:'ئامادە', th_count:'ژمارە', th_m2:'کۆی مەتر مربع', th_price_usd:'$ نرخ', th_price_total:'نرخی تەواو', th_glass:'شیشە', th_order_g:'داواکاری', th_color:'ڕەنگ', th_system:'سیستەم', th_glass_received:'وەرگرتنی شیشە', th_glass_design:'نەخشەی جام', th_transport:'ناردن', th_driver:'ناوی سائق',
                 glass_design_attached:'وێنەی نەخشە هەیە',
                 archive_title:'ئەڕشیڤی ساڵانە', archive_2026:'ساڵی 2026 (چالاک)', archive_close:'داخستن', context_delete:'سڕینەوەی ڕیزەکان', finalize_alert:'نوێکاریی تەواو کرا — پەڕەی مۆبایل دەگۆڕێت', month_label:'مانگ', print_title: 'سیستەمی سەرەکی - ٢٠٢٦'
             },
             ar: {
-                btn_pdf: 'حفظ PDF', btn_archive: 'الأرشيف السنوي', btn_add: 'إضافة صف', btn_back: 'رجوع', btn_export: 'حفظ (Excel)', btn_driver: 'خاص بالسائق', btn_finalize: 'إنهاء',
+                btn_pdf: 'حفظ PDF', btn_archive: 'الأرشيف السنوي', btn_add: 'إضافة صف', btn_back: 'العودة إلى الطلب', btn_export: 'حفظ (Excel)', btn_driver: 'خاص بالسائق', btn_finalize: 'إنهاء',
                 search_placeholder: '🔍 بحث...', th_index:'#', th_company:'اسم الشركة', th_owner:'صاحب الطلبية', th_date:'التاريخ', th_ready:'جاهز', th_count:'العدد', th_m2:'مجموع متر مربع', th_price_usd:'$ سعر', th_price_total:'السعر الكلي', th_glass:'جام', th_order_g:'طلب ج', th_color:'اللون', th_system:'النظام', th_glass_received:'استلام جام', th_glass_design:'تصميم الزجاج', th_transport:'النقل', th_driver:'اسم السائق',
                 glass_design_attached:'تصميم مرفق',
                 archive_title:'الأرشيف السنوي', archive_2026:'سنة 2026 (نشط)', archive_close:'إغلاق', context_delete:'حذف الصفوف', finalize_alert:'تم التحديث النهائي — سيتغير العرض على الجوال', month_label:'شهر', print_title: 'النظام الرئيسي - ٢٠٢٦'
             },
             en: {
-                btn_pdf: 'Save PDF', btn_archive: 'Yearly Archive', btn_add: 'Add Row', btn_back: 'Back', btn_export: 'Save (Excel)', btn_driver: 'Driver Only', btn_finalize: 'Finalize',
+                btn_pdf: 'Save PDF', btn_archive: 'Yearly Archive', btn_add: 'Add Row', btn_back: 'Back to Orders', btn_export: 'Save (Excel)', btn_driver: 'Driver Only', btn_finalize: 'Finalize',
                 search_placeholder: '🔍 Search...', th_index:'#', th_company:'Company Name', th_owner:'Order Owner', th_date:'Date', th_ready:'Ready', th_count:'Count', th_m2:'Total m²', th_price_usd:'$ Price', th_price_total:'Total Price', th_glass:'Glass', th_order_g:'Order G', th_color:'Color', th_system:'System', th_glass_received:'Glass Received', th_glass_design:'Glass Design', th_transport:'Transport', th_driver:'Driver Name',
                 glass_design_attached:'Design attached',
                 archive_title:'Yearly Archive', archive_2026:'Year 2026 (active)', archive_close:'Close', context_delete:'Delete rows', finalize_alert:'Final update applied — mobile view will change', month_label:'Month', print_title: 'Main System - 2026'

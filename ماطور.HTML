@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DS System - Matour 16 Updated</title>
+    <script src="glass-design-sync.js"></script>
     <style>
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; background-color: white; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
         .controls-container { display: flex; gap: 10px; justify-content: center; margin-top: 20px; padding-bottom: 40px; }
@@ -174,6 +175,8 @@
         }
 
     </style>
+    <script src="glass-design-sync.js"></script>
+    <script src="glass-design-sync.js"></script>
 </head>
 <body onclick="hideMenu()">
 
@@ -499,6 +502,7 @@
             if (w > 0 && h > 0) allData.push({ w, h, q, num: index + 1 });
         });
         if (allData.length > 0) {
+            saveGlassDesignOrderContext("ماطور");
             localStorage.setItem('jam_company_name', company);
             localStorage.setItem('jam_customer_name', owner);
             localStorage.setItem('glass_orders_2026', JSON.stringify(allData));

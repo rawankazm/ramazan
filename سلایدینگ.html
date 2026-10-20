@@ -171,6 +171,7 @@
         }
 
     </style>
+    <script src="glass-design-sync.js"></script>
 </head>
 <body onclick="hideMenu()">
 
@@ -491,6 +492,7 @@
             if (w > 0 && h > 0) allData.push({ w, h, q, num: index + 1 });
         });
         if (allData.length > 0) {
+            saveGlassDesignOrderContext("سلایدینگ");
             localStorage.setItem('jam_company_name', company);
             localStorage.setItem('jam_customer_name', owner);
             localStorage.setItem('glass_orders_2026', JSON.stringify(allData));

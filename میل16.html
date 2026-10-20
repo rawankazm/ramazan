@@ -177,6 +177,7 @@
         }
 
     </style>
+    <script src="glass-design-sync.js"></script>
 </head>
 <body onclick="hideMenu()">
 
@@ -535,6 +536,7 @@
             localStorage.setItem('jam_company_name', company);
             localStorage.setItem('jam_customer_name', owner);
             localStorage.setItem('jam_glass_type', glassType);
+            saveGlassDesignOrderContext("میل 16", glassType);
             localStorage.setItem('glass_orders_2026', JSON.stringify(allData));
             
             try {

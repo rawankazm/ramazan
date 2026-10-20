@@ -410,6 +410,8 @@
             if (w > 0 && h > 0) allData.push({ w, h, q, num: index + 1 });
         });
         if (allData.length > 0) {
+            localStorage.setItem('jam_company_name', document.getElementById('company_name').value);
+            localStorage.setItem('jam_customer_name', document.getElementById('owner_name').value);
             localStorage.setItem('glass_orders_2026', JSON.stringify(allData));
             window.location.href = "جام تیل20.html";
         } else alert("تکایە قیاسەکان داخل بکە!");

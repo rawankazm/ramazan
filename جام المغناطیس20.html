@@ -124,7 +124,11 @@
 </div>
 
 <div class="controls" id="action-controls">
-    <button class="btn design-undo-button" style="background:#7f8c8d" type="button" disabled>↶ پاشگەزبوونەوە</button>
+    <div style="display:flex;gap:2px;direction:ltr">
+        <button class="btn design-undo-button" style="width:36px;height:36px;padding:0;border-radius:5px;background:#202124;color:#e8eaed;font-size:22px" type="button" title="گەڕانەوە" aria-label="گەڕانەوە" disabled>←</button>
+        <button class="btn design-redo-button" style="width:36px;height:36px;padding:0;border-radius:5px;background:#202124;color:#e8eaed;font-size:22px" type="button" title="پێشچوونەوە" aria-label="پێشچوونەوە" disabled>→</button>
+        <button class="btn design-refresh-button" style="width:36px;height:36px;padding:0;border-radius:5px;background:#202124;color:#e8eaed;font-size:22px" type="button" title="نوێکردنەوەی پەڕە" aria-label="نوێکردنەوەی پەڕە">⟳</button>
+    </div>
     <button class="btn" style="background:#25D366" onclick="generateAndSharePDF()">📤 ناردنی PDF</button>
     <button class="btn" style="background:#2c3e50" onclick="window.print()">🖨️ چاپکردن</button>
     <a href="المغناطیس20.html" class="btn" style="background:#3498db; text-decoration:none;">⬅️ گەڕانەوە بۆ داواکاری</a>

@@ -66,10 +66,10 @@
         table th:nth-child(9), table td:nth-child(9) { min-width: 130px !important; width: 130px !important; }
         table th:nth-child(15), table td:nth-child(15) { min-width: 120px !important; width: 120px !important; }
         .glass-design-cell { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 42px; }
-        .glass-design-action { border: 0; border-radius: 4px; padding: 5px 8px; cursor: pointer; background: #e8eef7; font-size: 16px; }
         .glass-design-thumbnail { width: 42px; height: 36px; object-fit: cover; border: 1px solid #aaa; border-radius: 4px; cursor: zoom-in; }
         #glassDesignModal { display: none; position: fixed; inset: 0; z-index: 30000; background: rgba(0,0,0,.82); align-items: center; justify-content: center; padding: 20px; }
-        #glassDesignModal img { max-width: 95vw; max-height: 90vh; object-fit: contain; background: white; }
+        #glassDesignModalImages { display: flex; flex-direction: column; align-items: center; gap: 12px; max-height: 90vh; overflow: auto; }
+        #glassDesignModalImages img { max-width: 95vw; max-height: 85vh; object-fit: contain; background: white; }
         .row-id { background-color: #eee; font-weight: bold; text-align: center; width: 50px; cursor: cell; border: 1px solid #ccc; }
         tr.selected-row { background-color: #d1e7ff !important; }
         
@@ -142,7 +142,7 @@
     </div>
 
     <div id="glassDesignModal" onclick="closeGlassDesign()">
-        <img id="glassDesignModalImage" alt="Glass design" onclick="event.stopPropagation()">
+        <div id="glassDesignModalImages" onclick="event.stopPropagation()"></div>
     </div>
 
     <div id="archiveModal" style="display:none; position: fixed; z-index: 20000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);" onclick="toggleArchive()">
@@ -162,6 +162,7 @@
         let isSelecting = false;
         const STORAGE_KEY = 'ds_management_2026_permanent';
         let lastLocalChangeTime = 0;
+        let initialRemoteLoadComplete = false;
 
         function toggleDriverMode() {
             document.body.classList.toggle('driver-view');
@@ -218,6 +219,7 @@
                 const tbody = table.querySelector('.table-body');
                 for(let i=0; i<15; i++) { createEmptyRow(tbody, m); }
             }
+            setLanguage(localStorage.getItem(LANG_KEY) || 'ku');
             
             const initialMonthText = `مانگی ${currentMonth}`;
             document.getElementById('monthDisplay').innerText = initialMonthText;
@@ -234,6 +236,8 @@
                 setTimeout(() => {
                     if (typeof pullAllStatesFromRemote === 'function') {
                         pullAllStatesFromRemote().then(() => {
+                            initialRemoteLoadComplete = true;
+                            processPendingGlassDesigns();
                             if (typeof subscribeToRemoteSync === 'function') {
                                 subscribeToRemoteSync();
                             }
@@ -242,7 +246,10 @@
                 }, pullDelay);
             }, 100);
 
-            setInterval(checkIncomingData, 2000);
+            setInterval(() => {
+                checkIncomingData();
+                processPendingGlassDesigns();
+            }, 2000);
             setInterval(() => {
                 if (typeof pullAllStatesFromRemote === 'function') {
                     pullAllStatesFromRemote();
@@ -278,103 +285,56 @@
             return `<td>
                 <div class="glass-design-cell">
                     <input type="hidden" class="glass-design-data mobile-edit">
-                    <input type="file" class="glass-design-file mobile-edit" accept="image/*" hidden onchange="handleGlassDesignUpload(this)">
-                    <button type="button" class="glass-design-action" title="Upload glass design" aria-label="Upload glass design" onclick="this.parentElement.querySelector('.glass-design-file').click()">📷</button>
                     <img class="glass-design-thumbnail" alt="Glass design preview" hidden onclick="openGlassDesign(this)">
-                    <button type="button" class="glass-design-action glass-design-remove" title="Remove glass design" aria-label="Remove glass design" hidden onclick="removeGlassDesign(this)">✕</button>
                 </div>
             </td>`;
         }
 
-        async function handleGlassDesignUpload(fileInput) {
-            const file = fileInput.files && fileInput.files[0];
-            const row = fileInput.closest('tr');
-            fileInput.value = '';
-            if (!file || !row) return;
-            if (!file.type.startsWith('image/')) {
-                alert(i18n[localStorage.getItem(LANG_KEY) || 'ku'].glass_design_invalid);
-                return;
-            }
-
+        function getGlassDesignImages(value) {
+            if (!value) return [];
             try {
-                const imageUrl = URL.createObjectURL(file);
-                const image = new Image();
-                const loadedImage = new Promise((resolve, reject) => {
-                    image.onload = () => resolve(image);
-                    image.onerror = () => reject(new Error('Unable to read the selected image.'));
-                });
-                image.src = imageUrl;
-                await loadedImage;
-                URL.revokeObjectURL(imageUrl);
-
-                const maxDimension = 1600;
-                const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
-                const canvas = document.createElement('canvas');
-                canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-                canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-                const context = canvas.getContext('2d');
-                if (!context) throw new Error('Canvas is not available.');
-                context.fillStyle = '#fff';
-                context.fillRect(0, 0, canvas.width, canvas.height);
-                context.drawImage(image, 0, 0, canvas.width, canvas.height);
-
-                const compressedImage = await new Promise((resolve, reject) => {
-                    canvas.toBlob(blob => {
-                        if (blob) resolve(blob);
-                        else reject(new Error('Unable to process the selected image.'));
-                    }, 'image/jpeg', 0.82);
-                });
-                if (compressedImage.size > 750 * 1024) {
-                    alert(i18n[localStorage.getItem(LANG_KEY) || 'ku'].glass_design_too_large);
-                    return;
-                }
-
-                const reader = new FileReader();
-                const dataUrl = await new Promise((resolve, reject) => {
-                    reader.onload = () => resolve(reader.result);
-                    reader.onerror = () => reject(reader.error || new Error('Unable to save the selected image.'));
-                    reader.readAsDataURL(compressedImage);
-                });
-                row.querySelector('.glass-design-data').value = dataUrl;
-                refreshGlassDesignPreview(row);
-                saveToLocal();
+                const images = JSON.parse(value);
+                if (Array.isArray(images)) return images.filter(image => typeof image === 'string' && image.startsWith('data:image/'));
             } catch (error) {
-                console.error('Glass design upload failed:', error);
-                alert(i18n[localStorage.getItem(LANG_KEY) || 'ku'].glass_design_failed);
+                // Older rows may contain one image data URL directly.
             }
+            return value.startsWith('data:image/') ? [value] : [];
         }
 
         function refreshGlassDesignPreview(row) {
             const data = row.querySelector('.glass-design-data');
             const preview = row.querySelector('.glass-design-thumbnail');
-            const removeButton = row.querySelector('.glass-design-remove');
-            const hasDesign = Boolean(data && data.value);
+            const images = getGlassDesignImages(data && data.value);
+            const hasDesign = images.length > 0;
             if (preview) {
                 preview.hidden = !hasDesign;
-                if (hasDesign) preview.src = data.value;
+                if (hasDesign) preview.src = images[0];
                 else preview.removeAttribute('src');
             }
-            if (removeButton) removeButton.hidden = !hasDesign;
         }
 
         function openGlassDesign(preview) {
             const modal = document.getElementById('glassDesignModal');
-            const image = document.getElementById('glassDesignModalImage');
-            image.src = preview.src;
+            const imagesContainer = document.getElementById('glassDesignModalImages');
+            const images = getGlassDesignImages(preview.closest('tr').querySelector('.glass-design-data').value);
+            imagesContainer.replaceChildren();
+            images.forEach((imageSource, index) => {
+                const image = document.createElement('img');
+                image.src = imageSource;
+                image.alt = `Glass design page ${index + 1}`;
+                imagesContainer.appendChild(image);
+            });
             modal.style.display = 'flex';
         }
 
         function closeGlassDesign() {
             document.getElementById('glassDesignModal').style.display = 'none';
-            document.getElementById('glassDesignModalImage').removeAttribute('src');
+            document.getElementById('glassDesignModalImages').replaceChildren();
         }
 
-        function removeGlassDesign(button) {
-            const row = button.closest('tr');
-            row.querySelector('.glass-design-data').value = '';
-            refreshGlassDesignPreview(row);
-            saveToLocal();
-        }
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeGlassDesign();
+        });
 
         function checkIncomingData() {
             const transferData = localStorage.getItem('2026_data');
@@ -420,6 +380,10 @@
                     <td><input type="text" class="driver-editable mobile-edit"></td>`;
                 
                 tbody.insertBefore(tr, tbody.firstChild);
+                if (data.glass_design) {
+                    tr.querySelector('.glass-design-data').value = data.glass_design;
+                    refreshGlassDesignPreview(tr);
+                }
                 renumber(tbody);
                 
                 localStorage.removeItem('2026_data'); 
@@ -433,6 +397,117 @@
                 if (monthBtn) {
                     switchMonth(orderMonth, monthBtn);
                 }
+            }
+        }
+
+        function normalizeOrderDate(dateValue) {
+            if (!dateValue) return '';
+            const parts = dateValue.trim().includes('-') ? dateValue.trim().split('-').reverse() : dateValue.trim().split('/');
+            if (parts.length !== 3) return dateValue.trim();
+            return parts.map((part, index) => index < 2 ? part.padStart(2, '0') : part).join('/');
+        }
+
+        function processPendingGlassDesigns() {
+            if (!initialRemoteLoadComplete) return;
+            const pending = JSON.parse(localStorage.getItem('glass_design_pending_2026') || '[]');
+            if (!Array.isArray(pending) || !pending.length) return;
+
+            const remaining = [];
+            let changed = false;
+            pending.forEach(design => {
+                const order = design.order || {};
+                const company = String(design.company || order.company || '').trim().toLowerCase();
+                const owner = String(design.owner || order.owner || '').trim().toLowerCase();
+                const orderDate = normalizeOrderDate(order.date || '');
+                const images = Array.isArray(design.images) ? design.images : [];
+                if (!images.length || (!company && !owner)) {
+                    remaining.push(design);
+                    return;
+                }
+
+                let matchedRow = null;
+                for (let month = 1; month <= 12 && !matchedRow; month++) {
+                    const tbody = document.querySelector(`#table-m-${month} .table-body`);
+                    if (!tbody) continue;
+                    matchedRow = Array.from(tbody.rows).find(row => {
+                        const inputs = Array.from(row.querySelectorAll('input')).filter(input => input.type !== 'file');
+                        const rowCompany = String(inputs[0]?.value || '').trim().toLowerCase();
+                        const rowOwner = String(inputs[1]?.value || '').trim().toLowerCase();
+                        const rowDate = normalizeOrderDate(inputs[2]?.value || '');
+                        const rowGlassType = String(inputs[9]?.value || '').trim().toLowerCase();
+                        const rowSystem = String(inputs[12]?.value || '').trim().toLowerCase();
+                        const glassType = String(order.glass_type || '').trim().toLowerCase();
+                        const system = String(order.system || '').trim().toLowerCase();
+                        return rowCompany === company &&
+                            rowOwner === owner &&
+                            (!orderDate || rowDate === orderDate) &&
+                            (!glassType || rowGlassType === glassType) &&
+                            (!system || rowSystem === system);
+                    }) || null;
+                }
+
+                if (matchedRow) {
+                    matchedRow.querySelector('.glass-design-data').value = JSON.stringify(images);
+                    refreshGlassDesignPreview(matchedRow);
+                    changed = true;
+                    return;
+                }
+
+                if (!order.company || !order.owner || !order.date) {
+                    remaining.push(design);
+                    return;
+                }
+                const parts = order.date.split('-');
+                const month = parts.length === 3 ? parseInt(parts[1], 10) : NaN;
+                const tbody = Number.isInteger(month) && month >= 1 && month <= 12
+                    ? document.querySelector(`#table-m-${month} .table-body`)
+                    : null;
+                if (!tbody) {
+                    remaining.push(design);
+                    return;
+                }
+
+                const date = `${parts[2]}/${parts[1]}/${parts[0]}`;
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="row-id" onmousedown="startSelecting(event, this)" onmouseenter="dragSelecting(this)" oncontextmenu="handleRightClick(event, this)"></td>
+                    <td><input type="text"></td>
+                    <td><input type="text"></td>
+                    <td><input type="text"></td>
+                    <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
+                    <td><input type="number" class="count-in" oninput="updateTotals()"></td>
+                    <td><input type="number" class="m2-in" oninput="calcT1(this)"></td>
+                    <td><input type="number" class="pr-in" oninput="calcT1(this)"></td>
+                    <td><input type="text" class="tot-in" readonly style="color:red; font-weight:bold;"></td>
+                    <td><input type="text"></td>
+                    <td style="text-align:center"><input type="checkbox" class="mobile-edit"></td>
+                    <td><input type="text"></td>
+                    <td><input type="text"></td>
+                    <td><input type="text"></td>
+                    ${glassDesignCellMarkup()}
+                    <td style="text-align:center"><input type="checkbox" class="driver-editable mobile-edit"></td>
+                    <td><input type="text" class="driver-editable mobile-edit"></td>`;
+                const values = [
+                    order.company, order.owner, date, false, order.q_total || '', order.m2_total || '', '',
+                    '', order.glass_type || '', false, order.color || '', order.system || '', '', JSON.stringify(images), false, ''
+                ];
+                const inputs = Array.from(tr.querySelectorAll('input')).filter(input => input.type !== 'file');
+                values.forEach((value, index) => {
+                    if (inputs[index].type === 'checkbox') inputs[index].checked = value;
+                    else inputs[index].value = value;
+                });
+                refreshGlassDesignPreview(tr);
+                tbody.insertBefore(tr, tbody.firstChild);
+                renumber(tbody);
+                changed = true;
+            });
+
+            if (changed) {
+                localStorage.setItem('glass_design_pending_2026', JSON.stringify(remaining));
+                saveToLocal(true);
+                updateTotals();
+                applyDriverEditModeBasedOnViewport();
+                adjustAllInputsWidth();
             }
         }
 
@@ -808,7 +883,8 @@
                         allData[m].forEach((rowData, trIndex) => {
                             createEmptyRow(tbody, m);
                             const lastRow = tbody.lastElementChild;
-                            if (rowData.length <= 15) rowData.splice(13, 0, '');
+                            if (rowData.length === 15) rowData.splice(13, 0, '');
+                            else if (rowData.length === 17) rowData.splice(14, 1);
                             const inputs = Array.from(lastRow.querySelectorAll('input')).filter(input => input.type !== 'file');
                             rowData.forEach((val, idx) => {
                                 if (inputs[idx]) {
@@ -1035,6 +1111,11 @@
                 const rowData = [];
                 const cols = row.querySelectorAll("th, td");
                 cols.forEach(col => {
+                    const designInput = col.querySelector('.glass-design-data');
+                    if (designInput) {
+                        rowData.push(designInput.value ? i18n[localStorage.getItem(LANG_KEY) || 'ku'].glass_design_attached : '');
+                        return;
+                    }
                     const input = col.querySelector('input:not([type="hidden"]):not([type="file"])');
                     if (input) {
                         if (input.type === 'checkbox') rowData.push(input.checked ? "بەڵێ" : "نەخێر");
@@ -1112,19 +1193,19 @@
             ku: {
                 btn_pdf: 'دابەزاندن بە PDF', btn_archive: 'ئەڕشیڤی ساڵانە', btn_add: 'زیادکردنی ڕیز', btn_back: 'گەڕانەوە', btn_export: 'ڕاکێشان (Excel)', btn_driver: 'تەنها بۆ سایەق', btn_finalize: 'تەواوکردن',
                 search_placeholder: '🔍 گەڕان...', th_index:'#', th_company:'ناوی کۆمپانیا', th_owner:'خاوەنی داواکاری', th_date:'بەروار', th_ready:'ئامادە', th_count:'ژمارە', th_m2:'کۆی مەتر مربع', th_price_usd:'$ نرخ', th_price_total:'نرخی تەواو', th_glass:'شیشە', th_order_g:'داواکاری', th_color:'ڕەنگ', th_system:'سیستەم', th_glass_received:'وەرگرتنی شیشە', th_glass_design:'نەخشەی جام', th_transport:'ناردن', th_driver:'ناوی سائق',
-                glass_design_invalid:'تکایە وێنەیەکی دروست هەڵبژێرە.', glass_design_too_large:'قەبارەی وێنەکە زۆرە. تکایە وێنەیەکی بچووکتر هەڵبژێرە.', glass_design_failed:'نەتوانرا وێنەکە بخوێندرێتەوە یان خەزن بکرێت.',
+                glass_design_attached:'وێنەی نەخشە هەیە',
                 archive_title:'ئەڕشیڤی ساڵانە', archive_2026:'ساڵی 2026 (چالاک)', archive_close:'داخستن', context_delete:'سڕینەوەی ڕیزەکان', finalize_alert:'نوێکاریی تەواو کرا — پەڕەی مۆبایل دەگۆڕێت', month_label:'مانگ', print_title: 'سیستەمی سەرەکی - ٢٠٢٦'
             },
             ar: {
                 btn_pdf: 'حفظ PDF', btn_archive: 'الأرشيف السنوي', btn_add: 'إضافة صف', btn_back: 'رجوع', btn_export: 'حفظ (Excel)', btn_driver: 'خاص بالسائق', btn_finalize: 'إنهاء',
                 search_placeholder: '🔍 بحث...', th_index:'#', th_company:'اسم الشركة', th_owner:'صاحب الطلبية', th_date:'التاريخ', th_ready:'جاهز', th_count:'العدد', th_m2:'مجموع متر مربع', th_price_usd:'$ سعر', th_price_total:'السعر الكلي', th_glass:'جام', th_order_g:'طلب ج', th_color:'اللون', th_system:'النظام', th_glass_received:'استلام جام', th_glass_design:'تصميم الزجاج', th_transport:'النقل', th_driver:'اسم السائق',
-                glass_design_invalid:'يرجى اختيار صورة صالحة.', glass_design_too_large:'الصورة كبيرة جداً. يرجى اختيار صورة أصغر.', glass_design_failed:'تعذرت قراءة الصورة أو حفظها.',
+                glass_design_attached:'تصميم مرفق',
                 archive_title:'الأرشيف السنوي', archive_2026:'سنة 2026 (نشط)', archive_close:'إغلاق', context_delete:'حذف الصفوف', finalize_alert:'تم التحديث النهائي — سيتغير العرض على الجوال', month_label:'شهر', print_title: 'النظام الرئيسي - ٢٠٢٦'
             },
             en: {
                 btn_pdf: 'Save PDF', btn_archive: 'Yearly Archive', btn_add: 'Add Row', btn_back: 'Back', btn_export: 'Save (Excel)', btn_driver: 'Driver Only', btn_finalize: 'Finalize',
                 search_placeholder: '🔍 Search...', th_index:'#', th_company:'Company Name', th_owner:'Order Owner', th_date:'Date', th_ready:'Ready', th_count:'Count', th_m2:'Total m²', th_price_usd:'$ Price', th_price_total:'Total Price', th_glass:'Glass', th_order_g:'Order G', th_color:'Color', th_system:'System', th_glass_received:'Glass Received', th_glass_design:'Glass Design', th_transport:'Transport', th_driver:'Driver Name',
-                glass_design_invalid:'Please select a valid image.', glass_design_too_large:'The image is too large. Please choose a smaller image.', glass_design_failed:'The image could not be read or saved.',
+                glass_design_attached:'Design attached',
                 archive_title:'Yearly Archive', archive_2026:'Year 2026 (active)', archive_close:'Close', context_delete:'Delete rows', finalize_alert:'Final update applied — mobile view will change', month_label:'Month', print_title: 'Main System - 2026'
             }
         };

@@ -7,8 +7,8 @@
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Open میل16.html",
-            "file": "c:\\Users\\Canon Co\\Desktop\\aa.html\\میل16.html"
+            "name": "Open Dashboard",
+            "file": "c:\\Users\\Canon Co\\Desktop\\clone\\ramazan\\Dashboard.html"
         }
     ]
 }

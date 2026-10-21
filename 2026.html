@@ -92,7 +92,37 @@
             white-space: nowrap;
         }
         .add-btn { background:#28a745; color:white; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:bold; transition: 0.3s; }
-        .back-order-btn { background:#3498db; border-radius:25px; min-height:45px; box-shadow:0 4px 10px rgba(52,152,219,.25); }
+        .main-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+        .main-actions .toolbar-btn,
+        .search-area .mobile-save-btn {
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            gap:7px;
+            min-height:42px;
+            padding:10px 16px;
+            border:1px solid transparent;
+            border-radius:12px;
+            color:#fff;
+            font:inherit;
+            font-size:14px;
+            font-weight:700;
+            line-height:1.25;
+            white-space:nowrap;
+            cursor:pointer;
+            box-shadow:0 3px 8px rgba(28,43,66,.16);
+            transition:transform .18s ease, box-shadow .18s ease, filter .18s ease;
+        }
+        .main-actions .toolbar-btn:hover,
+        .search-area .mobile-save-btn:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(28,43,66,.2); filter:brightness(1.04); }
+        .main-actions .toolbar-btn:active,
+        .search-area .mobile-save-btn:active { transform:translateY(0); box-shadow:0 2px 5px rgba(28,43,66,.16); }
+        .main-actions .toolbar-btn:focus-visible,
+        .search-area .mobile-save-btn:focus-visible { outline:3px solid rgba(30,64,175,.35); outline-offset:2px; }
+        .toolbar-add-btn, .toolbar-save-btn, .search-area .mobile-save-btn { background:#16834a; }
+        .toolbar-back-btn { background:#2786c7; }
+        .toolbar-home-btn { background:#5661a8; }
+        .toolbar-export-btn { background:#1769c2; }
 
         /* sync panel styles removed per revert request */
     </style>
@@ -114,25 +144,23 @@
         </div>
 
         <div class="controls">
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="main-actions">
                 <div id="lang-selector" style="display:flex; gap:6px; margin-left:6px; align-items:center">
                     <select id="lang-select" onchange="setLanguage(this.value)" style="padding:6px;border-radius:6px;border:1px solid #ccc;font-weight:bold">
                         <option value="ku">کوردی</option>
                         <option value="ar">عەرەبی</option>
                         <option value="en">EN</option>
                     </select>
-                    <a id="mobile-link" class="add-btn" href="?mobile=1" style="background:#17a2b8;">📱 Mobile</a>
                 </div>
-                <button class="add-btn" onclick="addNewRow()">➕ <span data-i18n="btn_add">زیادکردنی ڕیز</span></button>
-                <button class="add-btn back-order-btn" onclick="window.location.href='Dashboard.html'"><span data-i18n="btn_back">گەڕانەوە بۆ داواکاری</span> ⬅️</button>
-                <button class="add-btn" style="background:#007bff;" onclick="exportToExcel()">💾 <span data-i18n="btn_export">سەیڤکردن (Excel)</span></button>
-                <button class="add-btn sync-save-btn" style="background:#28a745;" onclick="triggerManualSave()">💾 <span data-i18n="btn_save">سەیڤکردن (مۆبایل و ئایپاد)</span></button>
-                <button class="add-btn driver-btn" onclick="toggleDriverMode()">🚚 <span data-i18n="btn_driver">تایبەت بە سایەق</span></button>
-                <button id="finalize-btn" class="add-btn" style="background:#17a2b8;" onclick="finalizeUpdates()">🔒 <span data-i18n="btn_finalize">نیشاندانی کۆتا</span></button>
+                <button class="add-btn toolbar-btn toolbar-add-btn" onclick="addNewRow()">➕ <span data-i18n="btn_add">زیادکردنی ڕیز</span></button>
+                <button class="add-btn toolbar-btn toolbar-back-btn" onclick="history.back()"><span data-i18n="btn_back">گەڕانەوە</span> ⬅️</button>
+                <button class="add-btn toolbar-btn toolbar-home-btn" onclick="window.location.href='Dashboard.html'">🏠 <span data-i18n="btn_home">هۆم</span></button>
+                <button class="add-btn toolbar-btn toolbar-export-btn" onclick="exportToExcel()">💾 <span data-i18n="btn_export">سەیڤکردن (Excel)</span></button>
+                <button class="add-btn toolbar-btn toolbar-save-btn sync-save-btn" onclick="triggerManualSave()">💾 <span data-i18n="btn_save">سەیڤکردن (مۆبایل و ئایپاد)</span></button>
             </div>
 
             <div class="search-area" style="display: flex; gap: 10px; align-items: center;">
-                <button class="add-btn mobile-save-btn" style="background:#28a745; margin: 0; padding: 10px 15px; font-size: 13px;" onclick="triggerManualSave()">💾 <span data-i18n="btn_save">سەیڤکردن</span></button>
+                <button class="add-btn toolbar-btn mobile-save-btn" style="margin: 0;" onclick="triggerManualSave()">💾 <span data-i18n="btn_save">سەیڤکردن</span></button>
                 <div class="search-box" style="margin: 0;">
                     <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="🔍 " data-i18n-placeholder="search_placeholder">
                 </div>
@@ -1192,19 +1220,19 @@
         ];
         const i18n = {
             ku: {
-                btn_pdf: 'دابەزاندن بە PDF', btn_archive: 'ئەڕشیڤی ساڵانە', btn_add: 'زیادکردنی ڕیز', btn_back: 'گەڕانەوە بۆ داواکاری', btn_export: 'ڕاکێشان (Excel)', btn_driver: 'تەنها بۆ سایەق', btn_finalize: 'تەواوکردن',
+                btn_pdf: 'دابەزاندن بە PDF', btn_archive: 'ئەڕشیڤی ساڵانە', btn_add: 'زیادکردنی ڕیز', btn_back: 'گەڕانەوە', btn_home: 'هۆم', btn_export: 'ڕاکێشان (Excel)', btn_driver: 'تەنها بۆ سایەق', btn_finalize: 'تەواوکردن',
                 search_placeholder: '🔍 گەڕان...', th_index:'#', th_company:'ناوی کۆمپانیا', th_owner:'خاوەنی داواکاری', th_date:'بەروار', th_ready:'ئامادە', th_count:'ژمارە', th_m2:'کۆی مەتر مربع', th_price_usd:'$ نرخ', th_price_total:'نرخی تەواو', th_glass:'شیشە', th_order_g:'داواکاری', th_color:'ڕەنگ', th_system:'سیستەم', th_glass_received:'وەرگرتنی شیشە', th_glass_design:'نەخشەی جام', th_transport:'ناردن', th_driver:'ناوی سائق',
                 glass_design_attached:'وێنەی نەخشە هەیە',
                 archive_title:'ئەڕشیڤی ساڵانە', archive_2026:'ساڵی 2026 (چالاک)', archive_close:'داخستن', context_delete:'سڕینەوەی ڕیزەکان', finalize_alert:'نوێکاریی تەواو کرا — پەڕەی مۆبایل دەگۆڕێت', month_label:'مانگ', print_title: 'سیستەمی سەرەکی - ٢٠٢٦'
             },
             ar: {
-                btn_pdf: 'حفظ PDF', btn_archive: 'الأرشيف السنوي', btn_add: 'إضافة صف', btn_back: 'العودة إلى الطلب', btn_export: 'حفظ (Excel)', btn_driver: 'خاص بالسائق', btn_finalize: 'إنهاء',
+                btn_pdf: 'حفظ PDF', btn_archive: 'الأرشيف السنوي', btn_add: 'إضافة صف', btn_back: 'العودة', btn_home: 'الرئيسية', btn_export: 'حفظ (Excel)', btn_driver: 'خاص بالسائق', btn_finalize: 'إنهاء',
                 search_placeholder: '🔍 بحث...', th_index:'#', th_company:'اسم الشركة', th_owner:'صاحب الطلبية', th_date:'التاريخ', th_ready:'جاهز', th_count:'العدد', th_m2:'مجموع متر مربع', th_price_usd:'$ سعر', th_price_total:'السعر الكلي', th_glass:'جام', th_order_g:'طلب ج', th_color:'اللون', th_system:'النظام', th_glass_received:'استلام جام', th_glass_design:'تصميم الزجاج', th_transport:'النقل', th_driver:'اسم السائق',
                 glass_design_attached:'تصميم مرفق',
                 archive_title:'الأرشيف السنوي', archive_2026:'سنة 2026 (نشط)', archive_close:'إغلاق', context_delete:'حذف الصفوف', finalize_alert:'تم التحديث النهائي — سيتغير العرض على الجوال', month_label:'شهر', print_title: 'النظام الرئيسي - ٢٠٢٦'
             },
             en: {
-                btn_pdf: 'Save PDF', btn_archive: 'Yearly Archive', btn_add: 'Add Row', btn_back: 'Back to Orders', btn_export: 'Save (Excel)', btn_driver: 'Driver Only', btn_finalize: 'Finalize',
+                btn_pdf: 'Save PDF', btn_archive: 'Yearly Archive', btn_add: 'Add Row', btn_back: 'Go Back', btn_home: 'Home', btn_export: 'Save (Excel)', btn_driver: 'Driver Only', btn_finalize: 'Finalize',
                 search_placeholder: '🔍 Search...', th_index:'#', th_company:'Company Name', th_owner:'Order Owner', th_date:'Date', th_ready:'Ready', th_count:'Count', th_m2:'Total m²', th_price_usd:'$ Price', th_price_total:'Total Price', th_glass:'Glass', th_order_g:'Order G', th_color:'Color', th_system:'System', th_glass_received:'Glass Received', th_glass_design:'Glass Design', th_transport:'Transport', th_driver:'Driver Name',
                 glass_design_attached:'Design attached',
                 archive_title:'Yearly Archive', archive_2026:'Year 2026 (active)', archive_close:'Close', context_delete:'Delete rows', finalize_alert:'Final update applied — mobile view will change', month_label:'Month', print_title: 'Main System - 2026'

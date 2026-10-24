@@ -77,6 +77,9 @@
         }
         .add-btn { background:#28a745; color:white; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:bold; transition: 0.3s; }
     </style>
+    <style>html:not(.auth-authorized) body { visibility: hidden; }</style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/auth-guard.js"></script>
 </head>
 <body onmouseup="stopSelecting()">
 

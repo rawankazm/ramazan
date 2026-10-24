@@ -105,6 +105,19 @@
 
         .window-svg { width: 60px; height: 60px; stroke: currentColor; fill: none; stroke-width: 1.2; }
 
+        @media (max-width: 768px) {
+            #systemsMainCard,
+            #subSystemsArea {
+                display: none !important;
+            }
+
+            #archiveCard {
+                display: flex !important;
+                width: min(300px, calc(100vw - 48px));
+                box-sizing: border-box;
+            }
+        }
+
     </style>
 </head>
 <body>

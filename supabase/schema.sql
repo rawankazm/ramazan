@@ -1,5 +1,5 @@
 -- Supabase schema for the DS Partition & Curtain project
--- Designed for clean cross-device sync, auditability, and future login support.
+-- Designed for authenticated cross-device sync and restricted browser access.
 
 create extension if not exists pgcrypto;
 
@@ -257,20 +257,10 @@ drop policy if exists "profiles self read" on public.profiles;
 create policy "profiles self read"
 on public.profiles
 for select
-using (auth.uid() = id or auth.role() = 'service_role');
+using ((auth.uid() = id and is_active = true) or auth.role() = 'service_role');
 
 drop policy if exists "profiles self write" on public.profiles;
-create policy "profiles self write"
-on public.profiles
-for insert
-with check (auth.uid() = id or auth.role() = 'service_role');
-
 drop policy if exists "profiles self update" on public.profiles;
-create policy "profiles self update"
-on public.profiles
-for update
-using (auth.uid() = id or auth.role() = 'service_role')
-with check (auth.uid() = id or auth.role() = 'service_role');
 
 drop policy if exists "teams member read" on public.teams;
 create policy "teams member read"
@@ -508,61 +498,41 @@ with check (
 );
 
 drop policy if exists "state read own" on public.project_state;
-create policy "state read own"
-on public.project_state
-for select
-using (
-    auth.role() = 'service_role'
-    or (sync_scope = 'user' and sync_id = auth.uid()::text and user_id = auth.uid())
-    or exists (
-        select 1
-        from public.team_members tm
-        where tm.team_id = project_state.team_id
-            and tm.user_id = auth.uid()
-            and tm.is_active = true
-    )
-);
-
 drop policy if exists "state write own" on public.project_state;
-create policy "state write own"
+drop policy if exists "state anon read" on public.project_state;
+drop policy if exists "state anon write" on public.project_state;
+drop policy if exists "authorized shared 2026 state" on public.project_state;
+create policy "authorized shared 2026 state"
 on public.project_state
 for all
 using (
     auth.role() = 'service_role'
-    or (sync_scope = 'user' and sync_id = auth.uid()::text and user_id = auth.uid())
-    or exists (
-        select 1
-        from public.team_members tm
-        where tm.team_id = project_state.team_id
-            and tm.user_id = auth.uid()
-            and tm.is_active = true
+    or (
+        auth.uid() is not null
+        and sync_scope = 'client'
+        and sync_id = 'shared_ramazan_2026'
+        and exists (
+            select 1
+            from public.profiles p
+            where p.id = auth.uid()
+                and p.is_active = true
+        )
     )
 )
 with check (
     auth.role() = 'service_role'
-    or (sync_scope = 'user' and sync_id = auth.uid()::text and user_id = auth.uid())
-    or exists (
-        select 1
-        from public.team_members tm
-        where tm.team_id = project_state.team_id
-            and tm.user_id = auth.uid()
-            and tm.is_active = true
+    or (
+        auth.uid() is not null
+        and sync_scope = 'client'
+        and sync_id = 'shared_ramazan_2026'
+        and exists (
+            select 1
+            from public.profiles p
+            where p.id = auth.uid()
+                and p.is_active = true
+        )
     )
 );
-
--- Allow anonymous read and write access to project_state for cross-device sharing
-drop policy if exists "state anon read" on public.project_state;
-create policy "state anon read"
-on public.project_state
-for select
-using (true);
-
-drop policy if exists "state anon write" on public.project_state;
-create policy "state anon write"
-on public.project_state
-for all
-using (true)
-with check (true);
 
 drop policy if exists "conflicts read own" on public.sync_conflicts;
 create policy "conflicts read own"
@@ -666,6 +636,10 @@ with check (
 grant usage on schema public to anon, authenticated;
 grant select, insert, update, delete on all tables in schema public to anon, authenticated;
 grant usage, select on all sequences in schema public to anon, authenticated;
+revoke all on all tables in schema public from public, anon;
+revoke all on all sequences in schema public from anon;
+revoke all on all sequences in schema public from public;
+revoke all on public.teams, public.team_members from authenticated;
 
 insert into public.project_systems (slug, display_name, route, category, sort_order, is_active)
 values

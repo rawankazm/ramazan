@@ -4,27 +4,29 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Connect to Supabase</title>
+    <style>html:not(.auth-authorized) body { visibility: hidden; }</style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/auth-guard.js"></script>
 </head>
 <body>
   <h1>Supabase Connect Example</h1>
   <p id="status">Status: idle</p>
 
   <!-- Include the Supabase JS client from CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     // Replace these with your project's values (found in Supabase Project Settings -> API)
     const SUPABASE_URL = 'https://bchsayylzxzqevxydlet.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_4X9F_Pw_gswGnO6OcDnuXw_qI_ETiYK';
 
     // Initialize
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function testConnection() {
       document.getElementById('status').textContent = 'Status: testing...';
       // Example safe request: list up to 1 row from a public table named 'public_table'
       // Replace 'public_table' with a real table name in your DB.
       try {
-        const { data, error } = await supabase.from('public_table').select('*').limit(1);
+        const { data, error } = await supabaseClient.from('public_table').select('*').limit(1);
         if (error) throw error;
         document.getElementById('status').textContent = 'Status: OK — check console for data';
         console.log('Supabase query result:', data);

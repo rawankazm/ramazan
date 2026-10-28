@@ -199,8 +199,7 @@
  
         @media print { 
             .controls-container, #excel-menu, .col-resizer, .row-resizer, #excel-resize-tooltip, #col-resize-guide, #row-resize-guide { display: none !important; } 
-            .table-scroll-wrapper { overflow: visible !important; width: 100% !important; margin: 0 !important; }
-            table.data-table { width: 100% !important; }
+            .table-scroll-wrapper { overflow: visible !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; margin: 0 !important; }
             @page { size: A4 landscape; margin: 3mm; } 
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .selected-cell { outline: none !important; background-color: transparent !important; }
@@ -213,11 +212,17 @@
             .page-frame {
                 padding: 0 !important;
                 margin: 0 !important;
+                width: 100% !important;
+                min-width: 0 !important;
                 page-break-inside: avoid !important;
                 height: auto !important;
             }
  
             .top-header-wrapper {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                flex: 0 0 185px !important;
                 height: 185px !important;
                 min-width: 0 !important;
                 margin-bottom: 5px !important;

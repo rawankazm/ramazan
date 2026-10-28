@@ -239,6 +239,7 @@
 
     <div class="controls-container no-print">
         <a href="Dashboard.html" class="action-btn" style="background-color: #34495e;">🏠 گەڕانەوە</a>
+        <button class="action-btn" style="background-color: #8e44ad;" onclick="resetTableSizes()" title="گەڕاندنەوەی قەبارەی سەرەتایی">🔄 قەبارەی سەرەتایی</button>
         <button class="action-btn" style="background-color: #27ae60;" onclick="window.print()">🖨️ Print A4</button>
         <button class="action-btn" style="background-color: #2980b9;" onclick="savePage()">💾 Save to 2026</button>
     </div>
@@ -417,6 +418,7 @@ function clearSelectedContent() {
         window.location.assign("2026.html");
     }
 </script>
+<script src="js/table-size-reset.js"></script>
 <script src="js/worksheet-print.js"></script>
 <script src="js/glass-type-recognition.js"></script>
 </body>

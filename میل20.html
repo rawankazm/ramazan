@@ -218,6 +218,11 @@
                 page-break-inside: avoid !important;
                 height: auto !important;
             }
+
+            .print-copy {
+                break-before: page !important;
+                page-break-before: always !important;
+            }
  
             .top-header-wrapper {
                 width: 100% !important;
@@ -708,6 +713,7 @@ function calculate(el) {
     var colGuide = null;
     var rowGuide = null;
     var printColumnWidths = null;
+    var printCopies = [];
 
     function initExcelResizing() {
         const dataTable = document.querySelector('table.data-table');
@@ -1043,29 +1049,67 @@ function calculate(el) {
     }
 
     function prepareTableForPrint() {
-        const ths = Array.from(document.querySelectorAll('table.data-table thead th'));
         if (printColumnWidths) return;
-        const widths = ths.map(th => {
-            const inlineWidth = parseFloat(th.style.width);
-            return th.style.width.endsWith('%') || !inlineWidth
-                ? th.getBoundingClientRect().width
-                : inlineWidth;
+        const tables = Array.from(document.querySelectorAll('.page-frame table.data-table'));
+        printColumnWidths = tables.map(table => {
+            const ths = Array.from(table.querySelectorAll('thead th'));
+            const widths = ths.map(th => {
+                const inlineWidth = parseFloat(th.style.width);
+                return th.style.width.endsWith('%') || !inlineWidth
+                    ? th.getBoundingClientRect().width
+                    : inlineWidth;
+            });
+            const totalWidth = widths.reduce((sum, width) => sum + width, 0);
+            const originalWidths = ths.map(th => th.style.width);
+            return { ths, widths, totalWidth, originalWidths };
         });
-        const totalWidth = widths.reduce((sum, width) => sum + width, 0);
-        if (!totalWidth) return;
 
-        printColumnWidths = ths.map(th => th.style.width);
-        ths.forEach((th, idx) => {
-            th.style.width = `${(widths[idx] / totalWidth) * 100}%`;
+        printColumnWidths.forEach(({ ths, widths, totalWidth }) => {
+            if (!totalWidth) return;
+            ths.forEach((th, idx) => {
+                th.style.width = `${(widths[idx] / totalWidth) * 100}%`;
+            });
         });
     }
 
     function restoreTableAfterPrint() {
         if (!printColumnWidths) return;
-        document.querySelectorAll('table.data-table thead th').forEach((th, idx) => {
-            th.style.width = printColumnWidths[idx] || '';
+        printColumnWidths.forEach(({ ths, originalWidths }) => {
+            ths.forEach((th, idx) => {
+                th.style.width = originalWidths[idx];
+            });
         });
         printColumnWidths = null;
+    }
+
+    function createPrintCopies() {
+        if (printCopies.length) return;
+        const printableArea = document.getElementById('printable-area');
+        if (!printableArea) return;
+
+        const originalInputs = Array.from(printableArea.querySelectorAll('input'));
+        for (let copyIndex = 0; copyIndex < 4; copyIndex++) {
+            const copy = printableArea.cloneNode(true);
+            copy.removeAttribute('id');
+            copy.classList.add('print-copy');
+            copy.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+            copy.querySelectorAll('input').forEach((input, inputIndex) => {
+                input.value = originalInputs[inputIndex].value;
+            });
+            document.body.appendChild(copy);
+            printCopies.push(copy);
+        }
+    }
+
+    function preparePrintOutput() {
+        createPrintCopies();
+        prepareTableForPrint();
+    }
+
+    function restorePrintOutput() {
+        restoreTableAfterPrint();
+        printCopies.forEach(copy => copy.remove());
+        printCopies = [];
     }
 
     function onRowDblClick(e, tr, rIdx) {
@@ -1132,8 +1176,8 @@ function calculate(el) {
         initExcelResizing();
     }
 
-    window.addEventListener('beforeprint', prepareTableForPrint);
-    window.addEventListener('afterprint', restoreTableAfterPrint);
+    window.addEventListener('beforeprint', preparePrintOutput);
+    window.addEventListener('afterprint', restorePrintOutput);
 
     // داخستنی مێنۆ بە کلیک لە دەرەوەی
     document.addEventListener('mousedown', function(e) {

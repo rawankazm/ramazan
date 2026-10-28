@@ -219,6 +219,11 @@
                 height: auto !important;
             }
 
+            .print-copy {
+                break-before: page !important;
+                page-break-before: always !important;
+            }
+
             .top-header-wrapper {
                 width: 100% !important;
                 max-width: 100% !important;
@@ -708,6 +713,7 @@ function calculate(el) {
     var colGuide = null;
     var rowGuide = null;
     var printColumnWidths = null;
+    var printCopies = [];
 
     function initExcelResizing() {
         const dataTable = document.querySelector('table.data-table');
@@ -1076,6 +1082,36 @@ function calculate(el) {
         printColumnWidths = null;
     }
 
+    function createPrintCopies() {
+        if (printCopies.length) return;
+        const printableArea = document.getElementById('printable-area');
+        if (!printableArea) return;
+
+        const originalInputs = Array.from(printableArea.querySelectorAll('input'));
+        for (let copyIndex = 0; copyIndex < 4; copyIndex++) {
+            const copy = printableArea.cloneNode(true);
+            copy.removeAttribute('id');
+            copy.classList.add('print-copy');
+            copy.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+            copy.querySelectorAll('input').forEach((input, inputIndex) => {
+                input.value = originalInputs[inputIndex].value;
+            });
+            document.body.appendChild(copy);
+            printCopies.push(copy);
+        }
+    }
+
+    function preparePrintOutput() {
+        createPrintCopies();
+        prepareTableForPrint();
+    }
+
+    function restorePrintOutput() {
+        restoreTableAfterPrint();
+        printCopies.forEach(copy => copy.remove());
+        printCopies = [];
+    }
+
     function onRowDblClick(e, tr, rIdx) {
         e.preventDefault();
         e.stopPropagation();
@@ -1140,8 +1176,8 @@ function calculate(el) {
         initExcelResizing();
     }
 
-    window.addEventListener('beforeprint', prepareTableForPrint);
-    window.addEventListener('afterprint', restoreTableAfterPrint);
+    window.addEventListener('beforeprint', preparePrintOutput);
+    window.addEventListener('afterprint', restorePrintOutput);
 
     // داخستنی مێنۆ بە کلیک لە دەرەوەی
     document.addEventListener('mousedown', function(e) {

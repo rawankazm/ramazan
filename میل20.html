@@ -200,6 +200,7 @@
         @media print { 
             .controls-container, #excel-menu, .col-resizer, .row-resizer, #excel-resize-tooltip, #col-resize-guide, #row-resize-guide { display: none !important; } 
             .table-scroll-wrapper { overflow: visible !important; width: 100% !important; max-width: 100% !important; min-width: 0 !important; margin: 0 !important; }
+            table.data-table { width: 100% !important; min-width: 0 !important; max-width: 100% !important; table-layout: fixed !important; }
             @page { size: A4 landscape; margin: 3mm; } 
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .selected-cell { outline: none !important; background-color: transparent !important; }
@@ -706,6 +707,7 @@ function calculate(el) {
     var resizeTooltip = null;
     var colGuide = null;
     var rowGuide = null;
+    var printColumnWidths = null;
 
     function initExcelResizing() {
         const dataTable = document.querySelector('table.data-table');
@@ -1040,6 +1042,32 @@ function calculate(el) {
         localStorage.setItem(STORAGE_KEY_ROWS, JSON.stringify(saved));
     }
 
+    function prepareTableForPrint() {
+        const ths = Array.from(document.querySelectorAll('table.data-table thead th'));
+        if (printColumnWidths) return;
+        const widths = ths.map(th => {
+            const inlineWidth = parseFloat(th.style.width);
+            return th.style.width.endsWith('%') || !inlineWidth
+                ? th.getBoundingClientRect().width
+                : inlineWidth;
+        });
+        const totalWidth = widths.reduce((sum, width) => sum + width, 0);
+        if (!totalWidth) return;
+
+        printColumnWidths = ths.map(th => th.style.width);
+        ths.forEach((th, idx) => {
+            th.style.width = `${(widths[idx] / totalWidth) * 100}%`;
+        });
+    }
+
+    function restoreTableAfterPrint() {
+        if (!printColumnWidths) return;
+        document.querySelectorAll('table.data-table thead th').forEach((th, idx) => {
+            th.style.width = printColumnWidths[idx] || '';
+        });
+        printColumnWidths = null;
+    }
+
     function onRowDblClick(e, tr, rIdx) {
         e.preventDefault();
         e.stopPropagation();
@@ -1103,6 +1131,9 @@ function calculate(el) {
     } else {
         initExcelResizing();
     }
+
+    window.addEventListener('beforeprint', prepareTableForPrint);
+    window.addEventListener('afterprint', restoreTableAfterPrint);
 
     // داخستنی مێنۆ بە کلیک لە دەرەوەی
     document.addEventListener('mousedown', function(e) {

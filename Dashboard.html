@@ -225,8 +225,15 @@
             const status = document.getElementById('supabaseStatus');
             if (!status) return;
 
+            if (window.location.protocol === 'file:') {
+                status.textContent = 'Supabase: local mode';
+                status.style.background = 'rgba(59,130,246,0.92)';
+                return;
+            }
+
             try {
                 const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
+                    method: 'GET',
                     headers: {
                         apikey: SUPABASE_ANON_KEY,
                         Authorization: `Bearer ${SUPABASE_ANON_KEY}`
@@ -240,9 +247,9 @@
                 status.textContent = 'Supabase: connected';
                 status.style.background = 'rgba(22,163,74,0.92)';
             } catch (error) {
-                status.textContent = 'Supabase: connection failed';
-                status.style.background = 'rgba(185,28,28,0.92)';
-                console.error('Supabase connection check failed:', error);
+                status.textContent = 'Supabase: offline mode';
+                status.style.background = 'rgba(107,114,128,0.92)';
+                console.warn('Supabase connection check failed; app continues in local mode.', error);
             }
         }
 

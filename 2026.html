@@ -280,10 +280,10 @@
                 processPendingGlassDesigns();
             }, 2000);
             setInterval(() => {
-                if (typeof pullAllStatesFromRemote === 'function') {
+                if (document.visibilityState === 'visible' && typeof pullAllStatesFromRemote === 'function') {
                     pullAllStatesFromRemote();
                 }
-            }, 5000);
+            }, 60000);
         }
 
         function createEmptyRow(tbody, m) {
@@ -548,6 +548,15 @@
         const SYNC_ID = 'shared_ramazan_2026';
         let isSyncingFromRemote = false;
         let pushDebounceTimer = null;
+        const pendingRemoteStates = new Map();
+        let isPullingFromRemote = false;
+        let remoteSyncBlockedByQuota = false;
+
+        function isSupabaseQuotaError(error) {
+            const message = error && error.message ? error.message : String(error || '');
+            return Number(error && error.status) === 402 ||
+                /exceed_egress_quota|402 payment required/i.test(message);
+        }
 
         function isDeepEqual(obj1, obj2) {
             if (obj1 === obj2) return true;
@@ -639,30 +648,34 @@
 
         async function triggerManualSave() {
             saveToLocal();
+            if (pushDebounceTimer) {
+                clearTimeout(pushDebounceTimer);
+                pushDebounceTimer = null;
+            }
+            pendingRemoteStates.clear();
             if (supabaseClient) {
                 const allData = JSON.parse(localStorage.getItem(STORAGE_KEY));
                 const finalizedVal = localStorage.getItem(STORAGE_KEY + '_finalized');
                 try {
-                    const p1 = supabaseClient.from('project_state').upsert({
-                        sync_scope: SYNC_SCOPE,
-                        sync_id: SYNC_ID,
-                        state_key: STORAGE_KEY,
-                        state_value: allData,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'sync_scope,sync_id,state_key' });
-                    
-                    const p2 = supabaseClient.from('project_state').upsert({
-                        sync_scope: SYNC_SCOPE,
-                        sync_id: SYNC_ID,
-                        state_key: STORAGE_KEY + '_finalized',
-                        state_value: finalizedVal,
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'sync_scope,sync_id,state_key' });
-                    
-                    const [r1, r2] = await Promise.all([p1, p2]);
-                    if (r1.error || r2.error) {
-                        throw new Error(r1.error?.message || r2.error?.message);
-                    }
+                    const { error } = await supabaseClient
+                        .from('project_state')
+                        .upsert([
+                            {
+                                sync_scope: SYNC_SCOPE,
+                                sync_id: SYNC_ID,
+                                state_key: STORAGE_KEY,
+                                state_value: allData,
+                                updated_at: new Date().toISOString()
+                            },
+                            {
+                                sync_scope: SYNC_SCOPE,
+                                sync_id: SYNC_ID,
+                                state_key: STORAGE_KEY + '_finalized',
+                                state_value: finalizedVal,
+                                updated_at: new Date().toISOString()
+                            }
+                        ], { onConflict: 'sync_scope,sync_id,state_key' });
+                    if (error) throw error;
                     const currentLang = localStorage.getItem('app_lang') || 'ku';
                     if (currentLang === 'ku') {
                         alert('سەیڤکردن و هاوسەنگکردنی مۆبایل و ئایپاد سەرکەوتوو بوو!');
@@ -673,40 +686,55 @@
                     }
                 } catch (err) {
                     console.error('Manual save failed:', err);
-                    alert('هەڵەیەک ڕوویدا لە کاتی سەیڤکردن لەسەر داتابەیس، بەڵام بە لۆکاڵی سەیڤ کراوە.\n\nError: ' + err.message);
+                    if (isSupabaseQuotaError(err)) {
+                        remoteSyncBlockedByQuota = true;
+                        alert('خزمەتگوزاری Supabase بەهۆی تێپەڕینی کۆتای دەرچوونی داتا وەستاوە. گۆڕانکارییەکان تەنها لەم ئامێرەدا پارێزراون و بۆ مۆبایل ناچن تا خاوەنی پڕۆژە کۆتا چارەسەر بکات (پلانی بەرزتر یان لابردنی spend cap).');
+                    } else {
+                        alert('سەیڤکردنی داتا لە کڵاود سەرکەوتوو نەبوو؛ گۆڕانکارییەکان تەنها لەم ئامێرەدا پارێزراون.\n\nهۆکار: ' + (err.message || String(err)));
+                    }
                 }
             } else {
-                alert('بە لۆکاڵی سەیڤ کراوە (Supabase بەردەست نییە).');
+                alert('Supabase بەردەست نییە؛ گۆڕانکارییەکان تەنها لەم ئامێرەدا پارێزراون و لەگەڵ مۆبایل هاوسەنگ ناکرێن.');
             }
         }
 
         // Function to push a state key to Supabase
         function pushStateToRemote(key, value) {
-            if (!supabaseClient || isSyncingFromRemote) return;
+            if (!supabaseClient || isSyncingFromRemote || remoteSyncBlockedByQuota) return;
+            pendingRemoteStates.set(key, value);
             if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
             pushDebounceTimer = setTimeout(async () => {
+                const states = Array.from(pendingRemoteStates, ([state_key, state_value]) => ({
+                    sync_scope: SYNC_SCOPE,
+                    sync_id: SYNC_ID,
+                    state_key,
+                    state_value,
+                    updated_at: new Date().toISOString()
+                }));
+                pendingRemoteStates.clear();
+                pushDebounceTimer = null;
+                if (!states.length) return;
+
                 try {
                     const { error } = await supabaseClient
                         .from('project_state')
-                        .upsert({
-                            sync_scope: SYNC_SCOPE,
-                            sync_id: SYNC_ID,
-                            state_key: key,
-                            state_value: value,
-                            updated_at: new Date().toISOString()
-                        }, {
+                        .upsert(states, {
                             onConflict: 'sync_scope,sync_id,state_key'
                         });
-                    if (error) console.error('Supabase push error:', error.message);
+                    if (error) {
+                        if (isSupabaseQuotaError(error)) remoteSyncBlockedByQuota = true;
+                        console.error('Supabase push error:', error.message);
+                    }
                 } catch (err) {
+                    if (isSupabaseQuotaError(err)) remoteSyncBlockedByQuota = true;
                     console.error('Failed to push state:', err);
                 }
-            }, 500);
+            }, 2000);
         }
 
         // Function to pull all states from Supabase on load
         async function pullAllStatesFromRemote() {
-            if (!supabaseClient) return;
+            if (!supabaseClient || remoteSyncBlockedByQuota || isPullingFromRemote || document.visibilityState === 'hidden') return;
             
             // Do not pull and overwrite if user is editing or has recently edited
             const isEditing = document.activeElement && 
@@ -716,6 +744,7 @@
                 return;
             }
 
+            isPullingFromRemote = true;
             try {
                 const { data, error } = await supabaseClient
                     .from('project_state')
@@ -745,16 +774,19 @@
                     if (dataChanged) {
                         loadSavedData();
                     }
-                    isSyncingFromRemote = false;
                 }
             } catch (err) {
+                if (isSupabaseQuotaError(err)) remoteSyncBlockedByQuota = true;
                 console.error('Failed to pull remote states:', err.message || err);
+            } finally {
+                isSyncingFromRemote = false;
+                isPullingFromRemote = false;
             }
         }
 
         // Subscribe to real-time changes
         function subscribeToRemoteSync() {
-            if (!supabaseClient) return;
+            if (!supabaseClient || remoteSyncBlockedByQuota) return;
             supabaseClient
                 .channel('public:project_state')
                 .on('postgres_changes', {
@@ -794,24 +826,33 @@
                         isSyncingFromRemote = false;
                     }
                 })
-                .subscribe();
+                .subscribe((status, error) => {
+                    if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                        console.error('Supabase realtime subscription failed:', error || status);
+                    }
+                });
         }
 
-        function pushStateToRemoteImmediate(key, value) {
-            if (!supabaseClient) return;
+        function pushStatesToRemoteImmediate(states) {
+            if (!supabaseClient || remoteSyncBlockedByQuota) return;
+            const payload = states.map(({ key, value }) => ({
+                sync_scope: SYNC_SCOPE,
+                sync_id: SYNC_ID,
+                state_key: key,
+                state_value: value,
+                updated_at: new Date().toISOString()
+            }));
             supabaseClient
                 .from('project_state')
-                .upsert({
-                    sync_scope: SYNC_SCOPE,
-                    sync_id: SYNC_ID,
-                    state_key: key,
-                    state_value: value,
-                    updated_at: new Date().toISOString()
-                }, {
+                .upsert(payload, {
                     onConflict: 'sync_scope,sync_id,state_key'
                 }).then(({error}) => {
-                    if (error) console.error('Supabase immediate push error:', error.message);
+                    if (error) {
+                        if (isSupabaseQuotaError(error)) remoteSyncBlockedByQuota = true;
+                        console.error('Supabase immediate push error:', error.message);
+                    }
                 }).catch(err => {
+                    if (isSupabaseQuotaError(err)) remoteSyncBlockedByQuota = true;
                     console.error('Failed to push state immediately:', err);
                 });
         }
@@ -843,9 +884,15 @@
 
             // Push to Supabase Realtime Sync
             if (isImmediate) {
-                if (pushDebounceTimer) clearTimeout(pushDebounceTimer);
-                pushStateToRemoteImmediate(STORAGE_KEY, allData);
-                pushStateToRemoteImmediate(STORAGE_KEY + '_finalized', finalizedVal);
+                if (pushDebounceTimer) {
+                    clearTimeout(pushDebounceTimer);
+                    pushDebounceTimer = null;
+                }
+                pendingRemoteStates.clear();
+                pushStatesToRemoteImmediate([
+                    { key: STORAGE_KEY, value: allData },
+                    { key: STORAGE_KEY + '_finalized', value: finalizedVal }
+                ]);
             } else {
                 pushStateToRemote(STORAGE_KEY, allData);
                 pushStateToRemote(STORAGE_KEY + '_finalized', finalizedVal);

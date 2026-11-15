@@ -226,8 +226,8 @@
             if (!status) return;
 
             if (window.location.protocol === 'file:') {
-                status.textContent = 'Supabase: local mode';
-                status.style.background = 'rgba(59,130,246,0.92)';
+                status.textContent = 'Supabase: hosted site required';
+                status.style.background = 'rgba(107,114,128,0.92)';
                 return;
             }
 
@@ -240,16 +240,42 @@
                     }
                 });
 
+                if (response.status === 402) {
+                    status.textContent = 'Supabase: project paused (HTTP 402)';
+                    status.style.background = 'rgba(185,28,28,0.92)';
+                    console.error('Supabase project returned HTTP 402. Reactivate the project in Supabase Dashboard.');
+                    return;
+                }
+
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}`);
                 }
 
-                status.textContent = 'Supabase: connected';
+                const client = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                if (!client) throw new Error('Supabase client library did not load.');
+
+                const { data: { session }, error: sessionError } = await client.auth.getSession();
+                if (sessionError) throw sessionError;
+                if (!session) {
+                    status.textContent = 'Supabase: sign-in required';
+                    status.style.background = 'rgba(180,83,9,0.92)';
+                    return;
+                }
+
+                const { error: stateError } = await client
+                    .from('project_state')
+                    .select('state_key')
+                    .eq('sync_scope', 'client')
+                    .eq('sync_id', 'shared_ramazan_2026')
+                    .limit(1);
+                if (stateError) throw stateError;
+
+                status.textContent = 'Supabase: sync ready';
                 status.style.background = 'rgba(22,163,74,0.92)';
             } catch (error) {
-                status.textContent = 'Supabase: offline mode';
-                status.style.background = 'rgba(107,114,128,0.92)';
-                console.warn('Supabase connection check failed; app continues in local mode.', error);
+                status.textContent = 'Supabase: sync unavailable';
+                status.style.background = 'rgba(185,28,28,0.92)';
+                console.error('Supabase sync check failed:', error);
             }
         }
 

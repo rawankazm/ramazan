@@ -1,11 +1,6 @@
 (function () {
-    const printCopies = [];
     let originalColumnStyles = [];
     let resizingStyle;
-
-    function getPrintRoot() {
-        return document.querySelector('#pdf-area, #printable-area, .a4-container');
-    }
 
     function getResizableTables() {
         return Array.from(document.querySelectorAll('table.data-table, .a4-container table'));
@@ -74,10 +69,6 @@
                     max-width: 100% !important;
                     min-width: 0 !important;
                     table-layout: fixed !important;
-                }
-                .print-copy {
-                    break-before: page !important;
-                    page-break-before: always !important;
                 }
             }
         `;
@@ -225,44 +216,6 @@
         });
     }
 
-    function copyCurrentValues(source, copy) {
-        const sourceControls = source.querySelectorAll('input, textarea, select');
-        const copyControls = copy.querySelectorAll('input, textarea, select');
-        sourceControls.forEach((control, index) => {
-            const target = copyControls[index];
-            if (!target) return;
-            if (control.type === 'checkbox' || control.type === 'radio') {
-                target.checked = control.checked;
-            } else {
-                target.value = control.value;
-            }
-        });
-        source.querySelectorAll('[contenteditable="true"]').forEach((element, index) => {
-            const target = copy.querySelectorAll('[contenteditable="true"]')[index];
-            if (target) target.innerHTML = element.innerHTML;
-        });
-    }
-
-    function removeIds(element) {
-        if (element.id) element.removeAttribute('id');
-        element.querySelectorAll('[id]').forEach(child => child.removeAttribute('id'));
-    }
-
-    function createPrintCopies() {
-        if (printCopies.length) return;
-        const root = getPrintRoot();
-        if (!root) return;
-
-        for (let index = 0; index < 4; index++) {
-            const copy = root.cloneNode(true);
-            copy.classList.add('print-copy');
-            removeIds(copy);
-            copyCurrentValues(root, copy);
-            document.body.appendChild(copy);
-            printCopies.push(copy);
-        }
-    }
-
     function prepareTableWidthsForPrint() {
         const records = [];
         getResizableTables().forEach(table => {
@@ -310,13 +263,10 @@
             });
         });
         originalColumnStyles = [];
-        printCopies.forEach(copy => copy.remove());
-        printCopies.length = 0;
     }
 
     initializeResizing();
     window.addEventListener('beforeprint', () => {
-        createPrintCopies();
         prepareTableWidthsForPrint();
     });
     window.addEventListener('afterprint', restoreAfterPrint);

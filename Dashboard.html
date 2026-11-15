@@ -120,6 +120,7 @@
 
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/auth-guard.js" defer></script>
 </head>
 <body>
 
@@ -225,12 +226,6 @@
             const status = document.getElementById('supabaseStatus');
             if (!status) return;
 
-            if (window.location.protocol === 'file:') {
-                status.textContent = 'Supabase: hosted site required';
-                status.style.background = 'rgba(107,114,128,0.92)';
-                return;
-            }
-
             try {
                 const response = await fetch(`${SUPABASE_URL}/auth/v1/settings`, {
                     method: 'GET',
@@ -241,9 +236,16 @@
                 });
 
                 if (response.status === 402) {
-                    status.textContent = 'Supabase: project paused (HTTP 402)';
+                    let message = 'Supabase returned HTTP 402.';
+                    try {
+                        const details = await response.json();
+                        if (details.message) message = details.message;
+                    } catch (error) {
+                        console.warn('Could not read Supabase error details:', error);
+                    }
+                    status.textContent = 'Supabase: egress quota exceeded';
                     status.style.background = 'rgba(185,28,28,0.92)';
-                    console.error('Supabase project returned HTTP 402. Reactivate the project in Supabase Dashboard.');
+                    console.error('Supabase project is restricted:', message);
                     return;
                 }
 
@@ -273,7 +275,9 @@
                 status.textContent = 'Supabase: sync ready';
                 status.style.background = 'rgba(22,163,74,0.92)';
             } catch (error) {
-                status.textContent = 'Supabase: sync unavailable';
+                status.textContent = window.location.protocol === 'file:'
+                    ? 'Supabase: open the hosted HTTPS site'
+                    : 'Supabase: sync unavailable';
                 status.style.background = 'rgba(185,28,28,0.92)';
                 console.error('Supabase sync check failed:', error);
             }

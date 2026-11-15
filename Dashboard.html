@@ -120,7 +120,6 @@
 
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="js/auth-guard.js" defer></script>
 </head>
 <body>
 
@@ -255,14 +254,6 @@
 
                 const client = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 if (!client) throw new Error('Supabase client library did not load.');
-
-                const { data: { session }, error: sessionError } = await client.auth.getSession();
-                if (sessionError) throw sessionError;
-                if (!session) {
-                    status.textContent = 'Supabase: sign-in required';
-                    status.style.background = 'rgba(180,83,9,0.92)';
-                    return;
-                }
 
                 const { error: stateError } = await client
                     .from('project_state')
